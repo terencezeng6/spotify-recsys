@@ -17,6 +17,12 @@ API_BASE_URL = "https://api.spotify.com/v1/"
 
 @app.route("/")
 def index():
+  if "access_token" in session and datetime.now().timestamp() < session["expires_at"]:
+    username = session.get("username", "Unknown User")
+    return f"""
+      <p>Logged in as {username}</p>
+      <a href='/playlists'>See Playlists</a>
+    """
   return "<a href='/login'>Login with Spotify</a>"
 
 
@@ -82,7 +88,14 @@ def get_playlists():
   response = requests.get(API_BASE_URL + "me/playlists", headers=headers)
   playlists = response.json()
 
-  return jsonify(playlists)
+  output = "<h2>Playlists:</h2><ul>"
+  for playlist in playlists["items"]:
+    name = playlist.get("name", "Unnamed Playlist")
+    count = playlist.get("tracks", {}).get("total", 0)
+    output += f"<li>{name}: {count} tracks</li>"
+  output += "</ul>"
+
+  return output
 
 
 @app.route("/refresh-token")
