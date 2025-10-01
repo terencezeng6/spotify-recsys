@@ -20,15 +20,28 @@ def index():
   if "access_token" in session and datetime.now().timestamp() < session["expires_at"]:
     username = session.get("username", "Unknown User")
     return f"""
-      <p>Logged in as {username}</p>
-      <a href='/playlists'>See Playlists</a>
+      <span>Logged in as {username}</span>
+      <form action="/logout" method="get" style="display:inline;">
+        <button type="submit">Log Out</button>
+      </form>
+      <br><br>
+      <form action="/playlists" method="get">
+        <button type="submit">See Playlists</button>
+      </form>
+      <form action="/top-tracks" method="get">
+        <button type="submit">See Top Tracks</button>
+      </form>
     """
-  return "<a href='/login'>Login with Spotify</a>"
+  return f"""
+    <form action="/login" method="get">
+      <button type="submit">Login with Spotify</button>
+    </form>
+  """
 
 
 @app.route("/login")
 def login():
-  scope = "user-read-private user-read-email"
+  scope = "user-read-private user-read-email user-top-read"
 
   params = {
     "client_id": client_id,
@@ -41,6 +54,34 @@ def login():
   auth_url = f"{AUTH_URL}?{urllib.parse.urlencode(params)}"
 
   return redirect(auth_url)
+
+
+@app.route("/logout")
+def logout():
+  session.clear()
+  return redirect("/")
+
+
+@app.route("/refresh-token")
+def refresh_token():
+  if "refresh_token" not in session:
+    return redirect("/login")
+  
+  if datetime.now().timestamp() > session["expires_at"]:
+    req_body = {
+      "grant_type": "refresh_token",
+      "refresh_token": session["refresh_token"],
+      "client_id": client_id,
+      "client_secret": client_secret
+    }
+
+    response = requests.post(TOKEN_URL, data=req_body)
+    new_token_info = response.json()
+
+    session["access_token"] = new_token_info["access_token"]
+    session["expires_at"] = datetime.now().timestamp() + new_token_info["expires_in"]
+
+    return redirect("/playlists")
 
 
 @app.route("/callback")
@@ -88,7 +129,12 @@ def get_playlists():
   response = requests.get(API_BASE_URL + "me/playlists", headers=headers)
   playlists = response.json()
 
-  output = "<h2>Playlists:</h2><ul>"
+  output = """
+      <form action="/" method="get">
+        <button type="submit">Back to Main Page</button>
+      </form>
+    """
+  output += "<h2>Playlists:</h2><ul>"
   for playlist in playlists["items"]:
     name = playlist.get("name", "Unnamed Playlist")
     count = playlist.get("tracks", {}).get("total", 0)
@@ -98,26 +144,48 @@ def get_playlists():
   return output
 
 
-@app.route("/refresh-token")
-def refresh_token():
-  if "refresh_token" not in session:
+@app.route("/top-tracks")
+def top_tracks():
+  if "access_token" not in session:
     return redirect("/login")
-  
+
   if datetime.now().timestamp() > session["expires_at"]:
-    req_body = {
-      "grant_type": "refresh_token",
-      "refresh_token": session["refresh_token"],
-      "client_id": client_id,
-      "client_secret": client_secret
-    }
+    return redirect("/refresh-token")
+  
+  headers = {
+    "Authorization": f"Bearer {session["access_token"]}"
+  }
 
-    response = requests.post(TOKEN_URL, data=req_body)
-    new_token_info = response.json()
+  params = {
+    "limit": 50,
+    "time_range": "long_term"
+  }
+  response = requests.get(API_BASE_URL + "me/top/tracks", headers=headers, params=params)
+  tracks = response.json()
 
-    session["access_token"] = new_token_info["access_token"]
-    session["expires_at"] = datetime.now().timestamp() + new_token_info["expires_in"]
+  if "items" not in tracks:
+    return "<p>Error fetching top tracks</p>"
+  
+  output = """
+      <form action="/" method="get">
+        <button type="submit">Back to Main Page</button>
+      </form>
+    """
+  output += "<h2> Most played tracks in the past year</h2><ol>"
+  for track in tracks["items"]:
+    name = track.get("name", "Unknown track")
+    artist = ", ".join([a["name"] for a in track.get("artists", [])])
 
-    return redirect("/playlists")
+    output += f"""
+      <li>
+        {name} — {artist}
+      </li>
+    """  
+
+  output += "</ol>"
+
+  return output
+
   
 if __name__ == "__main__":
   app.run(host="0.0.0.0", debug=True)
