@@ -14,6 +14,7 @@ REDIRECT_URI = "http://127.0.0.1:5000/callback"
 AUTH_URL = "https://accounts.spotify.com/authorize"
 TOKEN_URL = "https://accounts.spotify.com/api/token"
 API_BASE_URL = "https://api.spotify.com/v1/"
+RECCOBEATS_BASE_URL = "https://api.reccobeats.com/v1/"
 
 @app.route("/")
 def index():
@@ -172,15 +173,47 @@ def top_tracks():
       </form>
     """
   output += "<h2> Most played tracks in the past year</h2><ol>"
+
   for track in tracks["items"]:
     name = track.get("name", "Unknown track")
     artist = ", ".join([a["name"] for a in track.get("artists", [])])
+    spotify_id = track.get("id")
 
-    output += f"""
+    headers = {
+      "Accept": "application/json"
+    }
+    params = {
+      "ids": spotify_id
+    }
+    response = requests.get(RECCOBEATS_BASE_URL + "track", headers=headers, params=params)
+    reccobeats = response.json()
+
+    if "content" in reccobeats and len(reccobeats["content"]) > 0:
+      reccobeats_id = reccobeats["content"][0]["id"]
+
+      response = requests.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers)
+      features = response.json()
+
+      acousticness = features.get("acousticness")
+      danceability = features.get("danceability")
+      energy = features.get("energy")
+      instrumentalness = features.get("instrumentalness")
+      loudness = features.get("loudness")
+      valence = features.get("valence")
+
+      output += f"""
       <li>
-        {name} — {artist}
-      </li>
-    """  
+          <strong>{name}</strong> — {artist}<br>
+          Acousticness: {acousticness}<br>
+          Danceability: {danceability}<br>
+          Energy: {energy}<br>
+          Instrumentalness: {instrumentalness}<br>
+          Loudness: {loudness} dB<br>
+          Valence: {valence}<br>
+      </li><br>
+      """
+    else:
+      output += f"<li><strong>{name}</strong> — {artist}<br><em>Audio features not available.</em></li><br>"
 
   output += "</ol>"
 
