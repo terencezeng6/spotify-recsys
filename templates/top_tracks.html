@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Top Tracks</title>
+  </head>
+  <body>
+    <form action="/" method="get">
+      <button type="submit">Back to Main Page</button>
+    </form>
+
+    <h2> Most played tracks in the past year</h2>
+    <ol>
+      {% for track in tracks %}
+        <li>
+          <strong>{{track.name}} — {{track.artist}}</strong><br>
+          {% if track.available %}
+            Acousticness: {{ track.acousticness }}<br>
+            Danceability: {{ track.danceability }}<br>
+            Energy: {{ track.energy }}<br>
+            Instrumentalness: {{ track.instrumentalness }}<br>
+            Loudness: {{ track.loudness }} dB<br>
+            Valence: {{ track.valence }}<br>
+          {% else %}
+            <em>Audio features not available for this track.</em>
+          {% endif %}
+        </li>
+        <br>
+      {% endfor %}
+    </ol>
+  </body>
+</html>

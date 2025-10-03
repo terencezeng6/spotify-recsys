@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Playlists</title>
+  </head>
+  <body>
+    <form action="/" method="get">
+      <button type="submit">Back to Main Page</button>
+    </form>
+    <h2>Playlists:</h2>
+    <ul>
+      {% for playlist in playlists %}
+        <li>{{playlist.name}}: {{playlist.count}} tracks</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

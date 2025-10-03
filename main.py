@@ -1,6 +1,6 @@
 import requests
 import os
-from flask import Flask, redirect, request, jsonify, session
+from flask import Flask, redirect, request, jsonify, session, render_template
 import urllib.parse
 from datetime import datetime
 
@@ -18,26 +18,9 @@ RECCOBEATS_BASE_URL = "https://api.reccobeats.com/v1/"
 
 @app.route("/")
 def index():
-  if "access_token" in session and datetime.now().timestamp() < session["expires_at"]:
-    username = session.get("username", "Unknown User")
-    return f"""
-      <span>Logged in as {username}</span>
-      <form action="/logout" method="get" style="display:inline;">
-        <button type="submit">Log Out</button>
-      </form>
-      <br><br>
-      <form action="/playlists" method="get">
-        <button type="submit">See Playlists</button>
-      </form>
-      <form action="/top-tracks" method="get">
-        <button type="submit">See Top Tracks</button>
-      </form>
-    """
-  return f"""
-    <form action="/login" method="get">
-      <button type="submit">Login with Spotify</button>
-    </form>
-  """
+  logged_in = "access_token" in session and datetime.now().timestamp() < session["expires_at"]
+  username = session.get("username", "Unknown User") if logged_in else None
+  return render_template("index.html", logged_in=logged_in, username=username)
 
 
 @app.route("/login")
@@ -128,21 +111,15 @@ def get_playlists():
   }
 
   response = requests.get(API_BASE_URL + "me/playlists", headers=headers)
-  playlists = response.json()
+  playlists_json = response.json()
 
-  output = """
-      <form action="/" method="get">
-        <button type="submit">Back to Main Page</button>
-      </form>
-    """
-  output += "<h2>Playlists:</h2><ul>"
-  for playlist in playlists["items"]:
+  playlists = []
+  for playlist in playlists_json.get("items", []):
     name = playlist.get("name", "Unnamed Playlist")
     count = playlist.get("tracks", {}).get("total", 0)
-    output += f"<li>{name}: {count} tracks</li>"
-  output += "</ul>"
+    playlists.append({"name": name, "count": count})
 
-  return output
+  return render_template("playlists.html", playlists=playlists)
 
 
 @app.route("/top-tracks")
@@ -158,23 +135,17 @@ def top_tracks():
   }
 
   params = {
-    "limit": 50,
-    "time_range": "long_term"
+    "limit": 10,                # number of tracks to fetch; this takes a while, so decrease this as needed!
+    "time_range": "long_term"   # data for ≈ past year; unfortunately, that's the longest range Spotify offers :(
   }
   response = requests.get(API_BASE_URL + "me/top/tracks", headers=headers, params=params)
-  tracks = response.json()
+  tracks_json = response.json()
 
-  if "items" not in tracks:
+  if "items" not in tracks_json:
     return "<p>Error fetching top tracks</p>"
   
-  output = """
-      <form action="/" method="get">
-        <button type="submit">Back to Main Page</button>
-      </form>
-    """
-  output += "<h2> Most played tracks in the past year</h2><ol>"
-
-  for track in tracks["items"]:
+  tracks = []
+  for track in tracks_json["items"]:
     name = track.get("name", "Unknown track")
     artist = ", ".join([a["name"] for a in track.get("artists", [])])
     spotify_id = track.get("id")
@@ -194,30 +165,26 @@ def top_tracks():
       response = requests.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers)
       features = response.json()
 
-      acousticness = features.get("acousticness")
-      danceability = features.get("danceability")
-      energy = features.get("energy")
-      instrumentalness = features.get("instrumentalness")
-      loudness = features.get("loudness")
-      valence = features.get("valence")
-
-      output += f"""
-      <li>
-          <strong>{name}</strong> — {artist}<br>
-          Acousticness: {acousticness}<br>
-          Danceability: {danceability}<br>
-          Energy: {energy}<br>
-          Instrumentalness: {instrumentalness}<br>
-          Loudness: {loudness} dB<br>
-          Valence: {valence}<br>
-      </li><br>
-      """
+      tracks.append({
+        "name": name,
+        "artist": artist,
+        "acousticness": features.get("acousticness"),
+        "danceability": features.get("danceability"),
+        "energy": features.get("energy"),
+        "instrumentalness": features.get("instrumentalness"),
+        "loudness": features.get("loudness"),
+        "valence": features.get("valence"),
+        "available": True
+      })
+      
     else:
-      output += f"<li><strong>{name}</strong> — {artist}<br><em>Audio features not available.</em></li><br>"
+      tracks.append({
+        "name": name,
+        "artist": artist,
+        "available": False
+      })
 
-  output += "</ol>"
-
-  return output
+  return render_template("top_tracks.html", tracks=tracks)
 
   
 if __name__ == "__main__":

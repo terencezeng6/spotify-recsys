@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Home</title>
+  </head>
+
+  <body>
+    {% if logged_in %}
+      <span>Logged in as {{username}} &nbsp;</span>
+      <form action="/logout" method="get" style="display:inline;">
+        <button type="submit">Log Out</button>
+      </form>
+      <br><br>
+      <form action="/playlists" method="get">
+        <button type="submit">See Playlists</button>
+      </form>
+      <br>
+      <form action="/top-tracks" method="get">
+        <button type="submit">See Top Tracks</button>
+      </form>
+    {% else %}
+      <form action="/login" method="get">
+        <button type="submit">Login with Spotify</button>
+      </form>
+    {% endif %}
+  </body>
+</html>
