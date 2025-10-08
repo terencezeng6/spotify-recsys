@@ -2,12 +2,15 @@
 <html>
   <head>
     <title>Playlists</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
   <body>
-    <form action="/" method="get">
-      <button type="submit">Back to Main Page</button>
-    </form>
-    <h2>Playlists:</h2>
+    <div class="back-container">
+      <form action="/" method="get">
+        <button class="back-btn" type="submit">←</button>
+      </form>
+    </div>
+    <h1>Playlists</h1>
     <ul>
       {% for playlist in playlists %}
         <li>{{playlist.name}}: {{playlist.count}} tracks</li>

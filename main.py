@@ -3,6 +3,7 @@ import os
 from flask import Flask, redirect, request, jsonify, session, render_template
 import urllib.parse
 from datetime import datetime
+import concurrent.futures
 
 app = Flask(__name__)
 app.secret_key = "idk_what_this_is_for"
@@ -135,7 +136,7 @@ def top_tracks():
   }
 
   params = {
-    "limit": 10,                # number of tracks to fetch; this takes a while, so decrease this as needed!
+    "limit": 50,                # number of tracks to fetch; this takes a while, so decrease this as needed!
     "time_range": "long_term"   # data for ≈ past year; unfortunately, that's the longest range Spotify offers :(
   }
   response = requests.get(API_BASE_URL + "me/top/tracks", headers=headers, params=params)
@@ -145,7 +146,8 @@ def top_tracks():
     return "<p>Error fetching top tracks</p>"
   
   tracks = []
-  for track in tracks_json["items"]:
+
+  def fetch_reccobeats_data(track):
     name = track.get("name", "Unknown track")
     artist = ", ".join([a["name"] for a in track.get("artists", [])])
     spotify_id = track.get("id")
@@ -165,7 +167,7 @@ def top_tracks():
       response = requests.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers)
       features = response.json()
 
-      tracks.append({
+      return {
         "name": name,
         "artist": artist,
         "acousticness": features.get("acousticness"),
@@ -175,16 +177,58 @@ def top_tracks():
         "loudness": features.get("loudness"),
         "valence": features.get("valence"),
         "available": True
-      })
+      }
       
     else:
-      tracks.append({
+      return {
         "name": name,
         "artist": artist,
         "available": False
-      })
+      }
+  
+  # for track in tracks_json["items"]:
+  #   name = track.get("name", "Unknown track")
+  #   artist = ", ".join([a["name"] for a in track.get("artists", [])])
+  #   spotify_id = track.get("id")
 
-  return render_template("top_tracks.html", tracks=tracks)
+  #   headers = {
+  #     "Accept": "application/json"
+  #   }
+  #   params = {
+  #     "ids": spotify_id
+  #   }
+  #   response = requests.get(RECCOBEATS_BASE_URL + "track", headers=headers, params=params)
+  #   reccobeats = response.json()
+
+  #   if "content" in reccobeats and len(reccobeats["content"]) > 0:
+  #     reccobeats_id = reccobeats["content"][0]["id"]
+
+  #     response = requests.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers)
+  #     features = response.json()
+
+  #     tracks.append({
+  #       "name": name,
+  #       "artist": artist,
+  #       "acousticness": features.get("acousticness"),
+  #       "danceability": features.get("danceability"),
+  #       "energy": features.get("energy"),
+  #       "instrumentalness": features.get("instrumentalness"),
+  #       "loudness": features.get("loudness"),
+  #       "valence": features.get("valence"),
+  #       "available": True
+  #     })
+      
+  #   else:
+  #     tracks.append({
+  #       "name": name,
+  #       "artist": artist,
+  #       "available": False
+  #     })
+
+  with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+    results = list(executor.map(fetch_reccobeats_data, tracks_json["items"]))
+
+  return render_template("top_tracks.html", tracks=results)
 
   
 if __name__ == "__main__":
