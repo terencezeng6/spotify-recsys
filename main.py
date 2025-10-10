@@ -4,6 +4,9 @@ from flask import Flask, redirect, request, jsonify, session, render_template
 import urllib.parse
 from datetime import datetime
 import concurrent.futures
+import json
+from requests.adapters import HTTPAdapter
+from flask import Response, stream_with_context
 
 app = Flask(__name__)
 app.secret_key = "idk_what_this_is_for"
@@ -135,100 +138,180 @@ def top_tracks():
     "Authorization": f"Bearer {session["access_token"]}"
   }
 
-  params = {
-    "limit": 50,                # number of tracks to fetch; this takes a while, so decrease this as needed!
-    "time_range": "long_term"   # data for ≈ past year; unfortunately, that's the longest range Spotify offers :(
-  }
+  # check for optional time_range query param (short_term, medium_term, long_term)
+  selected_range = request.args.get("time_range")
+
+  valid_ranges = {"short_term", "medium_term", "long_term"}
+  tracks_json = None
+
+  if selected_range in valid_ranges:
+    params = {
+      "limit": 50,                # number of tracks to fetch; this takes a while, so decrease this as needed!
+      "time_range": selected_range
+    }
+    response = requests.get(API_BASE_URL + "me/top/tracks", headers=headers, params=params)
+    tracks_json = response.json()
+
+    if "items" not in tracks_json:
+      return "<p>Error fetching top tracks</p>"
+
+  results = None
+  if tracks_json:
+    items = tracks_json.get("items", [])
+
+    # reuse a Session with a connection pool to speed up many HTTP requests
+    sess = requests.Session()
+    sess.headers.update({"Accept": "application/json"})
+    sess.mount('https://', HTTPAdapter(pool_connections=50, pool_maxsize=50))
+
+    def fetch_reccobeats_data_with_sess(track):
+      name = track.get("name", "Unknown track")
+      artist = ", ".join([a["name"] for a in track.get("artists", [])])
+      spotify_id = track.get("id")
+
+      try:
+        params = {"ids": spotify_id}
+        response = sess.get(RECCOBEATS_BASE_URL + "track", params=params)
+        if response.status_code != 200:
+          print(f"Reccobeats track lookup HTTP {response.status_code} for spotify_id={spotify_id}: {response.text[:200]}")
+          return {"name": name, "artist": artist, "available": False}
+
+        reccobeats = response.json()
+
+        if "content" in reccobeats and len(reccobeats["content"]) > 0:
+          reccobeats_id = reccobeats["content"][0]["id"]
+          response = sess.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features")
+
+          features = response.json()
+          return {
+            "name": name,
+            "artist": artist,
+            "acousticness": features.get("acousticness"),
+            "danceability": features.get("danceability"),
+            "energy": features.get("energy"),
+            "instrumentalness": features.get("instrumentalness"),
+            "loudness": features.get("loudness"),
+            "valence": features.get("valence"),
+            "available": True
+          }
+      except Exception as e:
+        print(f"Exception during Reccobeats lookup for spotify_id={spotify_id}: {e}")
+
+      return {"name": name, "artist": artist, "available": False}
+
+    max_workers = min(25, len(items))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+      results = list(executor.map(fetch_reccobeats_data_with_sess, items))
+
+  # render the template with either None (no selection yet) or the fetched results
+  return render_template("top_tracks.html", tracks=results, selected_range=selected_range)
+
+
+@app.route('/top-tracks-stream')
+def top_tracks_stream():
+  # Server-Sent Events endpoint that streams progress and track data
+  if "access_token" not in session:
+    return ("Not authenticated", 401)
+
+  if datetime.now().timestamp() > session["expires_at"]:
+    return ("Token expired", 401)
+
+  selected_range = request.args.get('time_range')
+  valid_ranges = {"short_term", "medium_term", "long_term"}
+  if selected_range not in valid_ranges:
+    return ("Invalid time_range", 400)
+
+  headers = {"Authorization": f"Bearer {session['access_token']}"}
+  params = {"limit": 50, "time_range": selected_range}
   response = requests.get(API_BASE_URL + "me/top/tracks", headers=headers, params=params)
   tracks_json = response.json()
-
   if "items" not in tracks_json:
-    return "<p>Error fetching top tracks</p>"
-  
-  tracks = []
+    return ("Error fetching top tracks", 500)
+
+  items = tracks_json["items"]
+  total = len(items)
+
+  # use a requests.Session with connection pooling
+  sess = requests.Session()
+  sess.headers.update({"Accept": "application/json"})
+  sess.mount('https://', HTTPAdapter(pool_connections=100, pool_maxsize=100))
 
   def fetch_reccobeats_data(track):
     name = track.get("name", "Unknown track")
     artist = ", ".join([a["name"] for a in track.get("artists", [])])
     spotify_id = track.get("id")
 
-    headers = {
-      "Accept": "application/json"
-    }
-    params = {
-      "ids": spotify_id
-    }
-    response = requests.get(RECCOBEATS_BASE_URL + "track", headers=headers, params=params)
-    reccobeats = response.json()
+    try:
+      params_rb = {"ids": spotify_id}
+      response_rb = sess.get(RECCOBEATS_BASE_URL + "track", params=params_rb)
+      if response_rb.status_code != 200:
+        print(f"Reccobeats track lookup HTTP {response_rb.status_code} for spotify_id={spotify_id}: {response_rb.text[:200]}")
+        return {"name": name, "artist": artist, "available": False}
 
-    if "content" in reccobeats and len(reccobeats["content"]) > 0:
-      reccobeats_id = reccobeats["content"][0]["id"]
+      reccobeats = response_rb.json()
 
-      response = requests.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers)
-      features = response.json()
+      if "content" in reccobeats and len(reccobeats["content"]) > 0:
+        reccobeats_id = reccobeats["content"][0]["id"]
+        response_feats = sess.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features")
+        if response_feats.status_code != 200:
+          print(f"Reccobeats audio-features HTTP {response_feats.status_code} for reccobeats_id={reccobeats_id}: {response_feats.text[:200]}")
+          return {"name": name, "artist": artist, "available": False}
 
-      return {
-        "name": name,
-        "artist": artist,
-        "acousticness": features.get("acousticness"),
-        "danceability": features.get("danceability"),
-        "energy": features.get("energy"),
-        "instrumentalness": features.get("instrumentalness"),
-        "loudness": features.get("loudness"),
-        "valence": features.get("valence"),
-        "available": True
-      }
-      
-    else:
-      return {
-        "name": name,
-        "artist": artist,
-        "available": False
-      }
-  
-  # for track in tracks_json["items"]:
-  #   name = track.get("name", "Unknown track")
-  #   artist = ", ".join([a["name"] for a in track.get("artists", [])])
-  #   spotify_id = track.get("id")
+        features = response_feats.json()
+        return {
+          "name": name,
+          "artist": artist,
+          "acousticness": features.get("acousticness"),
+          "danceability": features.get("danceability"),
+          "energy": features.get("energy"),
+          "instrumentalness": features.get("instrumentalness"),
+          "loudness": features.get("loudness"),
+          "valence": features.get("valence"),
+          "available": True
+        }
+    except Exception as e:
+      print(f"Exception during Reccobeats lookup for spotify_id={spotify_id}: {e}")
 
-  #   headers = {
-  #     "Accept": "application/json"
-  #   }
-  #   params = {
-  #     "ids": spotify_id
-  #   }
-  #   response = requests.get(RECCOBEATS_BASE_URL + "track", headers=headers, params=params)
-  #   reccobeats = response.json()
+    return {"name": name, "artist": artist, "available": False}
 
-  #   if "content" in reccobeats and len(reccobeats["content"]) > 0:
-  #     reccobeats_id = reccobeats["content"][0]["id"]
+  # we will fetch concurrently and yield results as they complete to provide smoother progress
+  def generate():
+    max_workers = min(32, max(4, total))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+      # schedule futures
+      futures = [executor.submit(fetch_reccobeats_data, t) for t in items]
 
-  #     response = requests.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers)
-  #     features = response.json()
+      # initial total message
+      yield f"event: total\ndata: {json.dumps({'total': total})}\n\n"
 
-  #     tracks.append({
-  #       "name": name,
-  #       "artist": artist,
-  #       "acousticness": features.get("acousticness"),
-  #       "danceability": features.get("danceability"),
-  #       "energy": features.get("energy"),
-  #       "instrumentalness": features.get("instrumentalness"),
-  #       "loudness": features.get("loudness"),
-  #       "valence": features.get("valence"),
-  #       "available": True
-  #     })
-      
-  #   else:
-  #     tracks.append({
-  #       "name": name,
-  #       "artist": artist,
-  #       "available": False
-  #     })
+      loaded = 0
+      # map futures back to their original index so we can emit in-order
+      fut_to_idx = {fut: idx for idx, fut in enumerate(futures)}
+      results_buffer = {}
+      next_to_emit = 0
 
-  with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
-    results = list(executor.map(fetch_reccobeats_data, tracks_json["items"]))
+      for fut in concurrent.futures.as_completed(futures):
+        idx = fut_to_idx.get(fut)
+        try:
+          data = fut.result()
+        except Exception:
+          data = {"name": "Unknown", "artist": "", "available": False}
 
-  return render_template("top_tracks.html", tracks=results)
+        loaded += 1
+        # always send progress as tasks complete
+        yield f"event: progress\ndata: {json.dumps({'loaded': loaded, 'total': total})}\n\n"
+
+        # buffer the result and emit any ready results in order
+        results_buffer[idx] = data
+        while next_to_emit in results_buffer:
+          out = results_buffer.pop(next_to_emit)
+          yield f"event: track\ndata: {json.dumps(out)}\n\n"
+          next_to_emit += 1
+
+      # signal completion
+      yield f"event: done\ndata: {{}}\n\n"
+
+  return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
   
 if __name__ == "__main__":

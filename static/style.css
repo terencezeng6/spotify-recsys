@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+  --bg-dark: hsl(0 0% 0%);
+  --bg: hsl(0 0% 5%);
+  --bg-light: hsl(0 0% 10%);
+  --text: hsl(0 0% 95%);
+  --text-muted: hsl(0 0% 70%);
+  --spotify-color: hsl(141 73% 22%);
+  --spotify-color-mid: hsl(141 73% 32%);
+  --spotify-color-pop: hsl(141 73% 42%);
+  --spotify-color-original: hsl(141 73% 42%);
+  --button-border-radius: 10px;
+}
+body.light {
+  --bg-dark: hsl(0 0% 90%);
+  --bg: hsl(0 0% 95%);
+  --bg-light: hsl(0 0% 100%);
+  --text: hsl(0 0% 5%);
+  --text-muted: hsl(0 0% 30%);
+  --spotify-color: hsl(141 73% 62%);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  margin: 0;
+  font-weight: 300;
+}
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+  text-align: center;
+  font-weight: 300;
+}
+h2 {
+  font-weight: 300;
+}
+h3 {
+  font-weight: 300;
+}
+
+/* scrollable body layout for long pages */
+.body-flexible {
+  display: block; /* override the global flex layout on body so pages using this class scroll normally */
+  min-height: 100vh; /* allow page to be taller than the viewport and scroll */
+}
+
+/* keep page content centered horizontally but allow vertical scrolling for flexible pages */
+.body-flexible > * {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 16px;
+}
+
+
+.login-btn {
+  display: flex;
+  align-items: center;
+  background-color: var(--spotify-color);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 300;
+  border: none;
+  border-radius: var(--button-border-radius);
+  padding: 16px 24px 16px 16px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s;
+}
+.login-btn:hover {
+  background-color: var(--spotify-color-mid);
+}
+.login-btn:active {
+  background-color: var(--spotify-color-pop);
+  transition: all 0s;
+}
+.spotify-logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  fill: var(--text);
+}
+
+.back-container {
+  position: fixed;
+  top: 0px;
+  left: 20px;
+}
+
+.analyze-buttons-container {
+  text-align: center;
+}
+.analyze-buttons-container h1 {
+  font-weight: 300;
+  margin-bottom: 40px;
+}
+
+.button-group {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.main-btn {
+  background: none;
+  color: var(--text);
+  background-color: var(--spotify-color);
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 300;
+  border: none;
+  border-radius: var(--button-border-radius);
+  padding: 14px 28px;
+  margin: 10px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.main-btn:hover {
+  background-color: var(--spotify-color-mid);
+}
+.main-btn:active {
+  background-color: var(--spotify-color-pop);
+  transition: all 0s;
+}
+
+.logout-container {
+  position: absolute;
+  top: 0px;
+  right: 20px;
+}
+.logout-btn {
+  background: none;
+  border: 1px solid #aaaaaa00;
+  color: var(--text-muted);
+  padding: 10px 20px;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.logout-btn:hover {
+  border: 1px solid var(--text);
+  color: var(--text);
+}
+.logout-btn:active {
+  border: 1px solid var(--text);
+  background-color: var(--text);
+  color: #000000;
+  transition: all 0s;
+}
+
+/* progress and streaming results styling */
+.track-item {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.progress-container {
+  background: var(--bg-light);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.results {
+  margin-top: 12px;
+}

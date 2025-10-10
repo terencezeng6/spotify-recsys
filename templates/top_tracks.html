@@ -2,30 +2,157 @@
 <html>
   <head>
     <title>Top Tracks</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
-  <body>
-    <form action="/" method="get">
-      <button type="submit">Back to Main Page</button>
-    </form>
+  <body class="body-flexible">
+    <div class="back-container">
+      <form action="/" method="get">
+        <button class="logout-btn" type="submit">&lt;&lt;</button>
+        <!-- <button class="back-btn" type="submit">←</button> -->
+      </form>
+    </div>
 
-    <h2> Most played tracks in the past year</h2>
-    <ol>
-      {% for track in tracks %}
-        <li>
-          <strong>{{track.name}} — {{track.artist}}</strong><br>
-          {% if track.available %}
-            Acousticness: {{ track.acousticness }}<br>
-            Danceability: {{ track.danceability }}<br>
-            Energy: {{ track.energy }}<br>
-            Instrumentalness: {{ track.instrumentalness }}<br>
-            Loudness: {{ track.loudness }} dB<br>
-            Valence: {{ track.valence }}<br>
-          {% else %}
-            <em>Audio features not available for this track.</em>
-          {% endif %}
-        </li>
-        <br>
-      {% endfor %}
-    </ol>
+    <h1 id="page-heading">Top Tracks</h1>
+
+    <div class="analyze-buttons-container">
+      <label for="time_range">Choose duration:</label>
+      <select id="time_range" name="time_range">
+        <option value="" {% if not selected_range %}selected{% endif %}>Select Duration</option>
+        <option value="short_term" {% if selected_range == 'short_term' %}selected{% endif %}>4 weeks</option>
+        <option value="medium_term" {% if selected_range == 'medium_term' %}selected{% endif %}>6 months</option>
+        <option value="long_term" {% if selected_range == 'long_term' %}selected{% endif %}>12 months</option>
+      </select>
+    </div>
+
+    <div id="loading" style="display: none; margin-top: 16px;">
+      <div id="progress-container" style="width:100%; max-width:600px; background:var(--bg-light); padding:6px; border-radius:8px;">
+        <div id="progress-bar" style="width:0%; height:12px; background: var(--spotify-color); border-radius:8px;"></div>
+      </div>
+      <div id="progress-text" style="margin-top:8px; color:var(--text-muted);">Waiting...</div>
+    </div>
+
+    <div id="results" style="margin-top:16px;"></div>
+
+    <noscript>
+      <!-- Fallback: server-rendered results if available -->
+      {% if tracks is not none %}
+        {% if tracks|length == 0 %}
+          <p>No tracks found for the selected duration.</p>
+        {% else %}
+          <h2>
+            Most played tracks in the past 
+            {% if selected_range == 'short_term' %} 4 weeks
+            {% elif selected_range == 'medium_term' %} 6 months 
+            {% elif selected_range == 'long_term' %} 12 months 
+            {% else %}{% endif %}:
+          </h2>
+          <ol>
+            {% for track in tracks %}
+              <li>
+                <strong>{{track.name}} — {{track.artist}}</strong><br>
+                {% if track.available %}
+                  Acousticness: {{ track.acousticness }}<br>
+                  Danceability: {{ track.danceability }}<br>
+                  Energy: {{ track.energy }}<br>
+                  Instrumentalness: {{ track.instrumentalness }}<br>
+                  Loudness: {{ track.loudness }} dB<br>
+                  Valence: {{ track.valence }}<br>
+                {% else %}
+                  <em>Audio features not available for this track.</em>
+                {% endif %}
+              </li>
+              <br>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      {% else %}
+        <p>Please select a duration above to load your top tracks.</p>
+      {% endif %}
+    </noscript>
+
+    <script>
+      const selectEl = document.getElementById('time_range');
+      const loadingEl = document.getElementById('loading');
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      const resultsDiv = document.getElementById('results');
+
+      let evtSource = null;
+
+      function startStream(value) {
+        if (!value) return;
+        if (evtSource) evtSource.close();
+        loadingEl.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressText.textContent = 'Starting...';
+        resultsDiv.innerHTML = '';
+
+        const params = new URLSearchParams();
+        params.set('time_range', value);
+        evtSource = new EventSource('/top-tracks-stream?' + params.toString());
+
+        let total = 0;
+        let loaded = 0;
+
+        evtSource.addEventListener('total', (e) => {
+          const obj = JSON.parse(e.data);
+          total = obj.total || 0;
+          progressText.textContent = `Loaded 0 / ${total}`;
+        });
+
+        evtSource.addEventListener('progress', (e) => {
+          const obj = JSON.parse(e.data);
+          loaded = obj.loaded || loaded;
+          if (total > 0) {
+            const pct = Math.round((loaded / total) * 100);
+            progressBar.style.width = pct + '%';
+            progressText.textContent = `Loaded ${loaded} / ${total}`;
+          } else {
+            progressText.textContent = `Loaded ${loaded}`;
+          }
+        });
+
+        evtSource.addEventListener('track', (e) => {
+          const t = JSON.parse(e.data);
+          const li = document.createElement('div');
+          li.className = 'track-item';
+          if (t.available) {
+            li.innerHTML = `<strong>${escapeHtml(t.name)} — ${escapeHtml(t.artist)}</strong><br>
+              Acousticness: ${escapeHtml(t.acousticness)}<br>
+              Danceability: ${escapeHtml(t.danceability)}<br>
+              Energy: ${escapeHtml(t.energy)}<br>
+              Instrumentalness: ${escapeHtml(t.instrumentalness)}<br>
+              Loudness: ${escapeHtml(t.loudness)} dB<br>
+              Valence: ${escapeHtml(t.valence)}<br><hr>`;
+          } else {
+            li.innerHTML = `<strong>${escapeHtml(t.name)} — ${escapeHtml(t.artist)}</strong><br><em>Audio features not available for this track.</em><hr>`;
+          }
+          resultsDiv.appendChild(li);
+        });
+
+        evtSource.addEventListener('done', (e) => {
+          progressBar.style.width = '100%';
+          progressText.textContent = `Completed ${loaded} / ${total}`;
+          evtSource.close();
+          evtSource = null;
+        });
+
+        evtSource.onerror = (err) => {
+          console.error('EventSource failed', err);
+          progressText.textContent = 'Error streaming data.';
+          if (evtSource) evtSource.close();
+          evtSource = null;
+        };
+      }
+
+      function escapeHtml(s) {
+        if (s === null || s === undefined) return '';
+        return String(s).replace(/[&<>'"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":"&#39;","\"":"&quot;"}[c]; });
+      }
+
+      selectEl.addEventListener('change', (e) => {
+        startStream(e.target.value);
+      });
+    </script>
   </body>
 </html>
