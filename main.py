@@ -131,21 +131,23 @@ def top_tracks():
   if datetime.now().timestamp() > session["expires_at"]:
     return redirect("/refresh-token")
   
+  time_range = request.args.get("time_range")  # Get the time_range from the query parameter
+  if time_range not in ["short_term", "medium_term", "long_term"]:
+      return render_template("top_tracks.html", tracks=None)
+  
   headers = {
     "Authorization": f"Bearer {session["access_token"]}"
   }
 
   params = {
-    "limit": 50,                # number of tracks to fetch; this takes a while, so decrease this as needed!
-    "time_range": "long_term"   # data for ≈ past year; unfortunately, that's the longest range Spotify offers :(
+    "limit": 10,                # number of tracks to fetch; decrease this if slow
+    "time_range": time_range    # use selected time_range
   }
   response = requests.get(API_BASE_URL + "me/top/tracks", headers=headers, params=params)
   tracks_json = response.json()
 
   if "items" not in tracks_json:
     return "<p>Error fetching top tracks</p>"
-  
-  tracks = []
 
   def fetch_reccobeats_data(track):
     name = track.get("name", "Unknown track")
@@ -185,50 +187,12 @@ def top_tracks():
         "artist": artist,
         "available": False
       }
-  
-  # for track in tracks_json["items"]:
-  #   name = track.get("name", "Unknown track")
-  #   artist = ", ".join([a["name"] for a in track.get("artists", [])])
-  #   spotify_id = track.get("id")
 
-  #   headers = {
-  #     "Accept": "application/json"
-  #   }
-  #   params = {
-  #     "ids": spotify_id
-  #   }
-  #   response = requests.get(RECCOBEATS_BASE_URL + "track", headers=headers, params=params)
-  #   reccobeats = response.json()
-
-  #   if "content" in reccobeats and len(reccobeats["content"]) > 0:
-  #     reccobeats_id = reccobeats["content"][0]["id"]
-
-  #     response = requests.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers)
-  #     features = response.json()
-
-  #     tracks.append({
-  #       "name": name,
-  #       "artist": artist,
-  #       "acousticness": features.get("acousticness"),
-  #       "danceability": features.get("danceability"),
-  #       "energy": features.get("energy"),
-  #       "instrumentalness": features.get("instrumentalness"),
-  #       "loudness": features.get("loudness"),
-  #       "valence": features.get("valence"),
-  #       "available": True
-  #     })
-      
-  #   else:
-  #     tracks.append({
-  #       "name": name,
-  #       "artist": artist,
-  #       "available": False
-  #     })
-
-  with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+  # multithreading stuff
+  with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
     results = list(executor.map(fetch_reccobeats_data, tracks_json["items"]))
 
-  return render_template("top_tracks.html", tracks=results)
+  return render_template("top_tracks.html", tracks=results, selected_range=time_range)
 
   
 if __name__ == "__main__":

@@ -2,30 +2,69 @@
 <html>
   <head>
     <title>Top Tracks</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
-  <body>
-    <form action="/" method="get">
-      <button type="submit">Back to Main Page</button>
-    </form>
+  <body class="body-flexible">
+    <div class="back-container">
+      <form action="/" method="get">
+        <button class="secondary-btn" type="submit">&lt;&lt;</button>
+      </form>
+    </div>
 
-    <h2> Most played tracks in the past year</h2>
-    <ol>
-      {% for track in tracks %}
-        <li>
-          <strong>{{track.name}} — {{track.artist}}</strong><br>
-          {% if track.available %}
-            Acousticness: {{ track.acousticness }}<br>
-            Danceability: {{ track.danceability }}<br>
-            Energy: {{ track.energy }}<br>
-            Instrumentalness: {{ track.instrumentalness }}<br>
-            Loudness: {{ track.loudness }} dB<br>
-            Valence: {{ track.valence }}<br>
-          {% else %}
-            <em>Audio features not available for this track.</em>
-          {% endif %}
-        </li>
-        <br>
-      {% endfor %}
-    </ol>
+    <!-- dropdown to select time range -->
+    <div style="padding-top: 50px;">
+      <label for="time_range">Time range:</label>
+      <select id="time_range" name="time_range">
+        <option value="" {% if not selected_range %}selected{% endif %}>Select Duration</option>
+        <option value="short_term" {% if selected_range == 'short_term' %}selected{% endif %}>4 weeks</option>
+        <option value="medium_term" {% if selected_range == 'medium_term' %}selected{% endif %}>6 months</option>
+        <option value="long_term" {% if selected_range == 'long_term' %}selected{% endif %}>12 months</option>
+      </select>
+    </div>
+
+    <!-- display tracks -->
+    {% if tracks %}
+      <h2>Most played tracks in the past 
+        {% if selected_range == 'short_term' %}
+          4 weeks
+        {% elif selected_range == 'medium_term' %}
+          6 months
+        {% elif selected_range == 'long_term' %}
+          12 months
+        {% else %}
+          ?
+        {% endif %}
+      </h2>
+      <ol>
+        {% for track in tracks %}
+          <li>
+            <strong>{{track.name}} — {{track.artist}}</strong><br>
+            {% if track.available %}
+              Acousticness: {{ track.acousticness }}<br>
+              Danceability: {{ track.danceability }}<br>
+              Energy: {{ track.energy }}<br>
+              Instrumentalness: {{ track.instrumentalness }}<br>
+              Loudness: {{ track.loudness }} dB<br>
+              Valence: {{ track.valence }}<br>
+            {% else %}
+              <em>Audio features not available for this track.</em>
+            {% endif %}
+          </li>
+          <br>
+        {% endfor %}
+      </ol>
+    {% else %}
+        <p>Please select a time range to view your top tracks.</p>
+    {% endif %}
+
+    <!-- refresh page when time duration is selected -->
+    <script>
+      document.getElementById('time_range').addEventListener('change', function() {
+        const selectedValue = this.value;
+        if (selectedValue) {
+          window.location.href = '/top-tracks?time_range=' + selectedValue;
+        }
+      });
+    </script>
   </body>
 </html>
