@@ -3,6 +3,7 @@
   <head>
     <title>Top Tracks</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
   <body class="body-flexible">
     <div class="back-container">
@@ -24,6 +25,12 @@
 
     <!-- display tracks -->
     {% if tracks %}
+
+      <div id="scatterplot-container">
+        <h3>Energy vs. Valence of Your Top Tracks</h3>
+        <div id="scatterplot"></div>
+      </div>
+
       <h2>Most played tracks in the past 
         {% if selected_range == 'short_term' %}
           4 weeks
@@ -66,5 +73,21 @@
         }
       });
     </script>
+
+    <!-- jsonify tracks data -->
+    <script id="track-data" type="application/json">
+      {{ tracks|tojson }}
+    </script>
+
+    <!-- create scatterplot -->
+    <script src="{{ url_for('static', filename='scatterplot.js') }}"></script>
+    {% if tracks %}
+      <script>  
+        const rawData = document.getElementById("track-data").textContent;
+        const tracks = JSON.parse(rawData);
+        const filtered_tracks = tracks.filter(d => d.available);
+        renderScatterplot(filtered_tracks);
+      </script>
+    {% endif %}
   </body>
 </html>

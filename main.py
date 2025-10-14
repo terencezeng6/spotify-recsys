@@ -140,7 +140,7 @@ def top_tracks():
   }
 
   params = {
-    "limit": 10,                # number of tracks to fetch; decrease this if slow
+    "limit": 50,                # number of tracks to fetch; decrease this if slow
     "time_range": time_range    # use selected time_range
   }
   response = requests.get(API_BASE_URL + "me/top/tracks", headers=headers, params=params)

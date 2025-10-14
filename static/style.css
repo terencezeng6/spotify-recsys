@@ -153,3 +153,50 @@ h3 {
   color: #000000;
   transition: all 0s;
 }
+
+/* stuff for graph */
+.axis-label {
+  font-size: 0.8rem;
+  fill: var(--text-muted);
+}
+.axis path,
+.axis line {
+  fill: none;
+  stroke: var(--text-muted);
+  shape-rendering: crispEdges;
+}
+.axis text {
+  fill: var(--text-muted);
+}
+.dot {
+  fill: var(--spotify-color-pop);
+  stroke: var(--bg-dark);
+  opacity: 0.6;
+}
+.dot:hover {
+  opacity: 1;
+  stroke: var(--text);
+}
+.tooltip {
+  position: absolute;
+  text-align: center;
+  width: auto;
+  padding: 8px;
+  font: 12px sans-serif;
+  background: var(--bg-light);
+  border: 1px solid var(--text-muted);
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.grid line {
+  stroke: lightgray;
+  stroke-opacity: 0.15;
+  shape-rendering: crispEdges;
+  stroke-width: 1px;
+}
+
+.grid path {
+  display: none
+}
