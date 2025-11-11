@@ -14,12 +14,29 @@
 
     <!-- dropdown to select time range -->
     <div style="padding-top: 50px;">
-      <label for="time_range">Time range:</label>
+      <label for="time_range">Time range: &nbsp;</label>
       <select id="time_range" name="time_range">
         <option value="" {% if not selected_range %}selected{% endif %}>Select Duration</option>
         <option value="short_term" {% if selected_range == 'short_term' %}selected{% endif %}>4 weeks</option>
         <option value="medium_term" {% if selected_range == 'medium_term' %}selected{% endif %}>6 months</option>
         <option value="long_term" {% if selected_range == 'long_term' %}selected{% endif %}>12 months</option>
+      </select>
+    </div>
+
+    <!-- dropdown to select mood -->
+    <div>
+      <label for="mood">Mood: &nbsp;</label>
+      <select id="mood" name="mood">
+        <option value="" {% if not selected_range %}selected{% endif %}>Select Mood</option>
+        <option value="angry" {% if selected_range == 'angry' %}selected{% endif %}>Angry</option>
+        <option value="stimulated" {% if selected_range == 'stimulated' %}selected{% endif %}>Stimulated</option>
+        <option value="excited" {% if selected_range == 'excited' %}selected{% endif %}>Excited</option>
+        <option value="distressed" {% if selected_range == 'distressed' %}selected{% endif %}>Distressed</option>
+        <option value="neutral" {% if selected_range == 'neutral' %}selected{% endif %}>Neutral</option>
+        <option value="happy" {% if selected_range == 'happy' %}selected{% endif %}>Happy</option>
+        <option value="sad" {% if selected_range == 'sad' %}selected{% endif %}>Sad</option>
+        <option value="tired" {% if selected_range == 'tired' %}selected{% endif %}>Tired</option>
+        <option value="relaxed" {% if selected_range == 'relaxed' %}selected{% endif %}>Relaxed</option>
       </select>
     </div>
 
@@ -64,13 +81,29 @@
         <p>Please select a time range to view your top tracks.</p>
     {% endif %}
 
-    <!-- refresh page when time duration is selected -->
+    <!-- refresh page when dropdown item is selected -->
+
     <script>
-      document.getElementById('time_range').addEventListener('change', function() {
-        const selectedValue = this.value;
-        if (selectedValue) {
-          window.location.href = '/top-tracks?time_range=' + selectedValue;
+      function updateQueryParam(key, value) {
+        const params = new URLSearchParams(window.location.search);
+
+        if (value && value !== "") {
+          params.set(key, value);
+        } else {
+          params.delete(key);
         }
+
+        const newQuery = params.toString();
+        const newUrl = window.location.pathname + (newQuery ? "?" + newQuery : "");
+        window.location.href = newUrl;
+      }
+
+      document.getElementById('time_range').addEventListener('change', function() {
+        updateQueryParam('time_range', this.value);
+      });
+
+      document.getElementById('mood').addEventListener('change', function() {
+        updateQueryParam('mood', this.value);
       });
     </script>
 

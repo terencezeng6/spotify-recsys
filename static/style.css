@@ -142,6 +142,7 @@ h3 {
   margin-top: 20px;
   cursor: pointer;
   transition: all 0.25s;
+  font-family: 'Inter', sans-serif;
 }
 .secondary-btn:hover {
   border: 1px solid var(--text);
@@ -154,10 +155,16 @@ h3 {
   transition: all 0s;
 }
 
-/* stuff for graph */
+/* dropdown */
+.time_range {
+  font-family: 'Inter', sans-serif;
+}
+
+/* stuff for scatterplot graph */
 .axis-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   fill: var(--text-muted);
+  font-family: 'Inter', sans-serif;
 }
 .axis path,
 .axis line {
@@ -167,6 +174,7 @@ h3 {
 }
 .axis text {
   fill: var(--text-muted);
+  font-family: 'Inter', sans-serif;
 }
 .dot {
   fill: var(--spotify-color-pop);
@@ -176,27 +184,27 @@ h3 {
 .dot:hover {
   opacity: 1;
   stroke: var(--text);
+  font-family: 'Inter', sans-serif;
 }
 .tooltip {
   position: absolute;
   text-align: center;
   width: auto;
   padding: 8px;
-  font: 12px sans-serif;
   background: var(--bg-light);
   border: 1px solid var(--text-muted);
   border-radius: 8px;
   pointer-events: none;
   opacity: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
 }
-
 .grid line {
   stroke: lightgray;
   stroke-opacity: 0.15;
   shape-rendering: crispEdges;
   stroke-width: 1px;
 }
-
 .grid path {
   display: none
 }
