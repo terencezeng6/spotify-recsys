@@ -46,31 +46,79 @@
     <section id="recommendations">
       <h2>Recommendations</h2>
 
-      {% if vanilla_rec %}
-        <div class="rec">
-          <iframe data-testid="embed-iframe" style="border-radius:12px" 
-          src="https://open.spotify.com/embed/track/{{vanilla_rec}}?utm_source=generator" 
-          width="100%" height="300" frameBorder="0" allowfullscreen="" 
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-          loading="lazy">
-          </iframe>
-        </div>
-      {% endif %}
+      <style>
+        .rec-row { display:flex; gap:1rem; flex-wrap:wrap; }
+        .rec-box { flex:1 1 320px; min-width:280px; padding:0.5rem; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+        .rec-iframe { width:100%; height:220px; border:0; border-radius:8px; }
+        .rating-form { margin-top:0.5rem; }
+        .rating-confirm { margin-top:0.5rem; color:green; }
+      </style>
 
-      {% if vanilla_rec %}
-        <div class="rec">
-          <iframe data-testid="embed-iframe" style="border-radius:12px" 
-          src="https://open.spotify.com/embed/track/{{biased_rec}}?utm_source=generator" 
-          width="100%" height="300" frameBorder="0" allowfullscreen="" 
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-          loading="lazy">
-          </iframe>
-        </div>
-      {% endif %}
+      <div class="rec-row">
+        {% if vanilla_rec %}
+          <div class="rec-box" id="rec-vanilla">
+            <h3>Vanilla</h3>
+            <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ vanilla_rec }}?utm_source=generator" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
 
-    {% endif %}
+            <div class="rating-form">
+              <label for="vanilla-rating">Rating (1-5)</label>
+              <input id="vanilla-rating" type="number" min="1" max="5" value="5">
+              <label for="vanilla-comment">Comment (optional)</label>
+              <input id="vanilla-comment" type="text" placeholder="Thoughts...">
+              <button type="button" onclick="submitRating('{{ vanilla_rec }}','vanilla')">Submit</button>
+              <div id="vanilla-confirm" class="rating-confirm" aria-live="polite"></div>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if biased_rec %}
+          <div class="rec-box" id="rec-biased">
+            <h3>Biased</h3>
+            <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ biased_rec }}?utm_source=generator" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+
+            <div class="rating-form">
+              <label for="biased-rating">Rating (1-5)</label>
+              <input id="biased-rating" type="number" min="1" max="5" value="5">
+              <label for="biased-comment">Comment (optional)</label>
+              <input id="biased-comment" type="text" placeholder="Thoughts...">
+              <button type="button" onclick="submitRating('{{ biased_rec }}','biased')">Submit</button>
+              <div id="biased-confirm" class="rating-confirm" aria-live="polite"></div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <script>
+        async function submitRating(recId, recType){
+          const ratingId = recType === 'vanilla' ? 'vanilla-rating' : 'biased-rating';
+          const commentId = recType === 'vanilla' ? 'vanilla-comment' : 'biased-comment';
+          const confirmId = recType === 'vanilla' ? 'vanilla-confirm' : 'biased-confirm';
+
+          const rating = parseInt(document.getElementById(ratingId).value) || null;
+          const comment = document.getElementById(commentId).value || '';
+          if(!rating || rating < 1 || rating > 5){
+            document.getElementById(confirmId).textContent = 'Enter rating 1-5';
+            return;
+          }
+
+          const payload = { rec_id: recId, rec_type: recType, rating: rating, comment: comment };
+          try{
+            const res = await fetch('/rate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            const data = await res.json();
+            if(res.ok){
+              document.getElementById(confirmId).textContent = 'Thanks — rating saved.';
+            } else {
+              document.getElementById(confirmId).textContent = 'Error: ' + (data.error || 'could not save');
+            }
+          }catch(e){
+            document.getElementById(confirmId).textContent = 'Network error';
+          }
+        }
+      </script>
 
     </section>
+
+    {% endif %}
 
     <!-- display tracks -->
     {% if tracks %}

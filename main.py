@@ -29,6 +29,40 @@ SPOTIFY_BASE_URL = "https://api.spotify.com/v1/"
 RECCOBEATS_BASE_URL = "https://api.reccobeats.com/v1/"
 LASTFM_BASE_URL = "http://ws.audioscrobbler.com/2.0/"
 
+
+@app.route("/rate", methods=["POST"])
+def rate():
+  # Accept JSON payload { rec_id, rec_type, rating, comment }
+  payload = {}
+  if request.is_json:
+    payload = request.get_json()
+  else:
+    payload = request.form.to_dict()
+
+  rec_id = payload.get('rec_id', '')
+  rec_type = payload.get('rec_type', '')
+  rating = payload.get('rating')
+  comment = payload.get('comment', '')
+
+  try:
+    rating_val = int(rating)
+  except Exception:
+    rating_val = None
+
+  username = session.get('username', 'anonymous')
+  ts = datetime.utcnow().isoformat() + 'Z'
+  safe_comment = str(comment).replace('\n', ' ').replace('\r', ' ').strip()
+
+  line = f"{ts}\t{username}\t{rec_type}\t{rec_id}\t{rating_val}\t{safe_comment}\n"
+  try:
+    path = os.path.join(app.root_path, 'ratings.txt')
+    with open(path, 'a', encoding='utf-8') as f:
+      f.write(line)
+    return jsonify({'ok': True})
+  except Exception as e:
+    return jsonify({'ok': False, 'error': str(e)}), 500
+
+
 @app.route("/")
 def index():
   logged_in = "access_token" in session and datetime.now().timestamp() < session["expires_at"]
@@ -223,7 +257,7 @@ def top_tracks():
 
   # randomly choose songs from available tracks and get some similar songs for each
 
-  num_seeds = 10
+  num_seeds = 15
   chosen_seeds = random.sample(range(len(tracks)), num_seeds)
 
   # print("SEEDS:")
@@ -241,7 +275,7 @@ def top_tracks():
         "track": track["name"],     
         "api_key": lastfm_id,
         "limit": 1,
-        "autocorrect": 1,
+        "autocorrect": 2,
         "format": "json",
       }
 
@@ -267,6 +301,8 @@ def top_tracks():
   recs = defaultdict(dict)
   i = 0
   for result in results:
+    if result == None:
+      continue
     for track in result["similartracks"]["track"]:
       recs[i]["name"] = track["name"]
       recs[i]["artist"] = track.get("artist").get("name")
