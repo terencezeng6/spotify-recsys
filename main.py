@@ -3,6 +3,7 @@ import os
 from flask import Flask, redirect, request, jsonify, session, render_template
 import urllib.parse
 from datetime import datetime
+import time
 
 import aiohttp
 import asyncio
@@ -146,6 +147,8 @@ def top_tracks():
   if time_range not in ["short_term", "medium_term", "long_term"]:
       return render_template("top_tracks.html", tracks=None)
   
+  mood = request.args.get("mood")
+  
   headers = {
     "Authorization": f"Bearer {session["access_token"]}"
   }
@@ -174,8 +177,8 @@ def top_tracks():
 
     async with session.get(RECCOBEATS_BASE_URL + "track", headers=headers, params=params) as response:
       reccobeats = await response.json()
-      if response.status == 429:
-        print("ERROR 429: RATE LIMITED")
+      if response.status != 200:
+        print(f"ERROR {response.status}")
 
     if "content" in reccobeats and len(reccobeats["content"]) > 0:
       reccobeats_id = reccobeats["content"][0]["id"]
@@ -218,9 +221,9 @@ def top_tracks():
   tracks = asyncio.run(fetch_all_reccobeats_data(tracks_json))
 
 
-  # randomly choose songs from available tracks and get 10 similar for each
+  # randomly choose songs from available tracks and get some similar songs for each
 
-  num_seeds = 20
+  num_seeds = 10
   chosen_seeds = random.sample(range(len(tracks)), num_seeds)
 
   # print("SEEDS:")
@@ -237,7 +240,7 @@ def top_tracks():
         "artist": track["artist"].split(',')[0].strip(),  # split because API only takes one artist, not multiple
         "track": track["name"],     
         "api_key": lastfm_id,
-        "limit": 2,
+        "limit": 1,
         "autocorrect": 1,
         "format": "json",
       }
@@ -258,11 +261,6 @@ def top_tracks():
 
   asyncio.run(run_tasks())
 
-  # for i, result in enumerate(results):
-  #   print(f"RESULT: ({len(result["similartracks"]["track"])} tracks from seed {i})")
-  #   for track in result["similartracks"]["track"]:
-  #     print(track["name"], "by", track["artist"]["name"])
-
 
   # index recommendations with only necessary info
 
@@ -274,7 +272,9 @@ def top_tracks():
       recs[i]["artist"] = track.get("artist").get("name")
       i += 1
 
-  print(recs)
+  print("RECS ORIGINAL:")
+  for rec in recs.values():
+    print(rec)
 
 
   # Use Spotify search endpoint to get Spotify ID from song name + artist (multithreaded)
@@ -301,6 +301,8 @@ def top_tracks():
     tasks = get_tasks(multithread_session)
     responses = await asyncio.gather(*tasks)
     for response in responses:
+      if response.status != 200:
+        print(f"ERROR {response.status}")
       results.append(await response.json())
     await multithread_session.close()
 
@@ -308,6 +310,10 @@ def top_tracks():
 
   for i, rec in recs.items():
     rec["spotify_id"] = results[i]["tracks"]["items"][0]["id"]
+
+  print("RECS WITH SPOTIFY IDS:")
+  for i, rec in recs.items():
+    print(i, rec)
 
 
   # Find Reccobeats IDs from Spotify IDs
@@ -330,6 +336,8 @@ def top_tracks():
     tasks = get_tasks(multithread_session)
     responses = await asyncio.gather(*tasks)
     for response in responses:
+      if response.status != 200:
+        print(f"ERROR {response.status}")
       results.append(await response.json())
     await multithread_session.close()
 
@@ -337,7 +345,6 @@ def top_tracks():
 
   for i, rec in recs.items():
     if "error" in results[i]:
-      print("TOO MANY CALLS: ERROR AT INDEX", i)
       rec["rb_id"] = "None"
       continue
     if not results[i]["content"]:
@@ -346,8 +353,39 @@ def top_tracks():
     else:
       rec["rb_id"] = results[i]["content"][0]["id"]
 
+  print("RECS WITH RECCOBEATS IDS:")
+  for i, rec in recs.items():
+    print(i, rec)
+
   
   # Find valence-energy data for all songs that have Reccobeats ID
+
+  # no multithreading, batch request (takes up to 40 tracks)
+
+  # params = {
+  #   "ids": [rec["rb_id"] for rec in recs.values()]
+  # }
+  # headers = {
+  #   'Accept': 'application/json'
+  # }
+  # response = requests.get(RECCOBEATS_BASE_URL + "audio-features", headers=headers, params=params)
+  # audio_features = response.json()
+
+  # print("AUDIO_FEATURES OUTPUT:", audio_features)
+
+  # for features in audio_features["content"]:
+  #   for rec in recs.values():
+  #     if rec["rb_id"] == features["id"]:
+  #       rec["valence"] = features["valence"]
+  #       rec["energy"] = features["energy"]
+
+  # for rec in recs.values():
+  #   if "valence" not in rec:
+  #     rec["valence"] = -1
+  #   if "energy" not in rec:
+  #     rec["energy"] = -1
+
+  # multithreaded version, single track per request
 
   def get_tasks(multithread_session):
     tasks = []
@@ -365,6 +403,8 @@ def top_tracks():
     tasks = get_tasks(multithread_session)
     responses = await asyncio.gather(*tasks)
     for response in responses:
+      if response.status != 200:
+        print(f"ERROR {response.status}")
       results.append(await response.json())
     await multithread_session.close()
 
@@ -379,23 +419,41 @@ def top_tracks():
       rec["energy"] = results[i]["energy"]
   
   
-  print("RECS:")
-  print(recs)
-  for rec in recs.values():
-    print(f"{rec["name"]} by {rec["artist"]}, {rec["valence"]}, {rec["energy"]}")
+  print("RECS WITH VALENCE ENERGY:")
+  for i, rec in recs.items():
+    print(i, f"{rec["name"]} by {rec["artist"]}, {rec["valence"]}, {rec["energy"]}")
 
 
   # calculate probabilities
 
-  user_mood = [0.2, 0.2]    # target [valence, energy]
+  user_mood = [0.5, 0.5]    # target [valence, energy]
   k = 0.02                  # decay factor
+
+  if mood == "angry":
+    user_mood = [0.1, 0.8]
+  elif mood == "stimulated":
+    user_mood = [0.5, 0.8]
+  elif mood == "excited":
+    user_mood = [0.8, 0.8]
+  elif mood == "distressed":
+    user_mood = [0.2, 0.5]
+  elif mood == "neutral":
+    user_mood = [0.5, 0.5]
+  elif mood == "happy":
+    user_mood = [0.8, 0.5]
+  elif mood == "sad":
+    user_mood = [0.2, 0.2]
+  elif mood == "tired":
+    user_mood = [0.5, 0.2]
+  elif mood == "relaxed":
+    user_mood = [0.8, 0.2]
 
   probabilities = [abs(float(rec["valence"]) - user_mood[0])**2 + abs(float(rec["energy"]) - user_mood[1])**2 for rec in recs.values()]
   probabilities = [math.exp(-x/k) for x in probabilities]
   probabilities = [x / sum(probabilities) for x in probabilities]
   print("PROBABILITIES:", probabilities)
 
-  num_recommendations = 5
+  num_recommendations = 2
   vanilla_recommendations = random.sample(range(len(recs)), num_recommendations)
   print(vanilla_recommendations)
   print("Vanilla Recommendations:")
@@ -413,7 +471,20 @@ def top_tracks():
     print(rec["name"], "by", rec["artist"])
     print("Valence:", rec["valence"], "Energy:", rec["energy"])
 
-  return render_template("top_tracks.html", tracks=tracks, selected_range=time_range)
+  vanilla_rec = recs[vanilla_recommendations[0]]["spotify_id"]
+  biased_rec = recs[biased_recommendations[0]]["spotify_id"]
+
+  if vanilla_rec == biased_rec:
+    vanilla_rec = recs[vanilla_recommendations[1]]["spotify_id"]
+
+  return render_template(
+    "top_tracks.html", 
+    tracks=tracks, 
+    selected_range=time_range, 
+    selected_mood=mood,
+    vanilla_rec=vanilla_rec,
+    biased_rec=biased_rec
+  )
 
   
 if __name__ == "__main__":
