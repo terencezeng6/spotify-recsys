@@ -1,11 +1,13 @@
 import requests
 import os
+from dotenv import load_dotenv
 from flask import Flask, redirect, request, jsonify, session, render_template
 import urllib.parse
 from datetime import datetime
 import time
 
 import aiohttp
+import json
 import asyncio
 
 import math
@@ -14,15 +16,16 @@ import numpy as np
 
 from collections import defaultdict
 
-
 app = Flask(__name__)
 app.secret_key = "idk_what_this_is_for"
+
+load_dotenv()
 
 spotify_id = os.getenv("client_id")
 spotify_secret = os.getenv("client_secret")
 lastfm_id = os.getenv("lastfm_id")
 
-REDIRECT_URI = "http://127.0.0.1:5000/callback"
+REDIRECT_URI = os.getenv("redirect_uri")
 AUTH_URL = "https://accounts.spotify.com/authorize"
 TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_BASE_URL = "https://api.spotify.com/v1/"
@@ -208,17 +211,64 @@ def top_tracks():
     params = {
       "ids": spotify_id
     }
+    # robustly fetch Reccobeats track lookup with retries and tolerant JSON parsing
+    reccobeats = None
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+      try:
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with session.get(RECCOBEATS_BASE_URL + "track", headers=headers, params=params, timeout=timeout) as response:
+          if response.status != 200:
+            # consume body for debugging then retry or break
+            text = await response.text()
+            print(f"RECCOBEATS lookup status={response.status}, attempt={attempt}, body={text[:200]}")
+            reccobeats = {}
+          else:
+            try:
+              reccobeats = await response.json()
+            except (aiohttp.ClientPayloadError, aiohttp.ContentTypeError, json.JSONDecodeError) as e:
+              # fallback: read text and try to parse leniently
+              text = await response.text()
+              try:
+                reccobeats = json.loads(text)
+              except Exception:
+                print(f"Failed to parse Reccobeats JSON on attempt {attempt}: {e}; body={text[:200]}")
+                reccobeats = {}
+      except (aiohttp.ClientError, asyncio.TimeoutError, ConnectionResetError) as e:
+        print(f"Reccobeats request error (attempt {attempt}): {e}")
+        reccobeats = {}
+      if reccobeats:
+        break
+        # small backoff before retrying
+        await asyncio.sleep(0.3 * attempt)
 
-    async with session.get(RECCOBEATS_BASE_URL + "track", headers=headers, params=params) as response:
-      reccobeats = await response.json()
-      if response.status != 200:
-        print(f"ERROR {response.status}")
-
-    if "content" in reccobeats and len(reccobeats["content"]) > 0:
+    if reccobeats and "content" in reccobeats and len(reccobeats["content"]) > 0:
       reccobeats_id = reccobeats["content"][0]["id"]
 
-      async with session.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers) as response:
-        features = await response.json()
+      # fetch audio features with same defensive approach
+      features = {}
+      for attempt in range(1, max_attempts + 1):
+        try:
+          timeout = aiohttp.ClientTimeout(total=10)
+          async with session.get(RECCOBEATS_BASE_URL + f"track/{reccobeats_id}/audio-features", headers=headers, timeout=timeout) as response:
+            if response.status != 200:
+              text = await response.text()
+              print(f"Reccobeats features status={response.status}, attempt={attempt}, body={text[:200]}")
+            else:
+              try:
+                features = await response.json()
+              except (aiohttp.ClientPayloadError, aiohttp.ContentTypeError, json.JSONDecodeError) as e:
+                text = await response.text()
+                try:
+                  features = json.loads(text)
+                except Exception:
+                  print(f"Failed to parse features JSON on attempt {attempt}: {e}; body={text[:200]}")
+                  features = {}
+        except (aiohttp.ClientError, asyncio.TimeoutError, ConnectionResetError) as e:
+          print(f"Reccobeats features request error (attempt {attempt}): {e}")
+        if features:
+          break
+        await asyncio.sleep(0.3 * attempt)
 
       return {
         "name":             name,

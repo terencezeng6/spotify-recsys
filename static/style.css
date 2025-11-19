@@ -12,6 +12,7 @@
   --spotify-color-original: hsl(141 73% 42%);
   --button-border-radius: 10px;
 }
+
 body.light {
   --bg-dark: hsl(0 0% 90%);
   --bg: hsl(0 0% 95%);
@@ -33,24 +34,29 @@ body {
   margin: 0;
   font-weight: 300;
 }
+
 h1 {
   font-size: 2.5rem;
   margin-bottom: 40px;
   text-align: center;
   font-weight: 300;
 }
+
 h2 {
   font-weight: 300;
 }
+
 h3 {
   font-weight: 300;
 }
 
-.body-flexible {      /* scrollable body layout for long pages */
+.body-flexible {
+  /* scrollable body layout for long pages */
   display: block;
   min-height: 100vh;
 }
-.body-flexible > * {
+
+.body-flexible>* {
   max-width: 900px;
   margin-left: auto;
   margin-right: auto;
@@ -72,13 +78,16 @@ h3 {
   text-decoration: none;
   transition: all 0.25s;
 }
+
 .login-btn:hover {
   background-color: var(--spotify-color-mid);
 }
+
 .login-btn:active {
   background-color: var(--spotify-color-pop);
   transition: all 0s;
 }
+
 .spotify-logo {
   width: 24px;
   height: 24px;
@@ -95,6 +104,7 @@ h3 {
 .analyze-buttons-container {
   text-align: center;
 }
+
 .analyze-buttons-container h1 {
   font-weight: 300;
   margin-bottom: 40px;
@@ -121,9 +131,11 @@ h3 {
   cursor: pointer;
   transition: all 0.25s;
 }
+
 .main-btn:hover {
   background-color: var(--spotify-color-mid);
 }
+
 .main-btn:active {
   background-color: var(--spotify-color-pop);
   transition: all 0s;
@@ -134,6 +146,7 @@ h3 {
   top: 0px;
   right: 20px;
 }
+
 .secondary-btn {
   background: none;
   border: 1px solid #aaaaaa00;
@@ -144,10 +157,12 @@ h3 {
   transition: all 0.25s;
   font-family: 'Inter', sans-serif;
 }
+
 .secondary-btn:hover {
   border: 1px solid var(--text);
   color: var(--text);
 }
+
 .secondary-btn:active {
   border: 1px solid var(--text);
   background-color: var(--text);
@@ -166,26 +181,31 @@ h3 {
   fill: var(--text-muted);
   font-family: 'Inter', sans-serif;
 }
+
 .axis path,
 .axis line {
   fill: none;
   stroke: var(--text-muted);
   shape-rendering: crispEdges;
 }
+
 .axis text {
   fill: var(--text-muted);
   font-family: 'Inter', sans-serif;
 }
+
 .dot {
   fill: var(--spotify-color-pop);
   stroke: var(--bg-dark);
   opacity: 0.6;
 }
+
 .dot:hover {
   opacity: 1;
   stroke: var(--text);
   font-family: 'Inter', sans-serif;
 }
+
 .tooltip {
   position: absolute;
   text-align: center;
@@ -199,12 +219,355 @@ h3 {
   font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
 }
+
 .grid line {
   stroke: lightgray;
   stroke-opacity: 0.15;
   shape-rendering: crispEdges;
   stroke-width: 1px;
 }
+
 .grid path {
   display: none
+}
+
+/* New Styles for Dropdowns, Rating Boxes, and Comments */
+
+select {
+  background-color: var(--bg-light);
+  color: var(--text);
+  border: 1px solid var(--text-muted);
+  border-radius: var(--button-border-radius);
+  padding: 10px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+select:focus {
+  border-color: var(--spotify-color);
+}
+
+.rec-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.rec-box {
+  flex: 1 1 320px;
+  min-width: 280px;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background-color: var(--bg-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--bg-dark);
+}
+
+.rec-iframe {
+  width: 100%;
+  height: 152px;
+  /* Standard Spotify embed height */
+  border: 0;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.rating-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rating-form label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.rating-form input[type="number"],
+.rating-form input[type="text"] {
+  background-color: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--text-muted);
+  border-radius: var(--button-border-radius);
+  padding: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.rating-form input[type="number"]:focus,
+.rating-form input[type="text"]:focus {
+  border-color: var(--spotify-color);
+}
+
+.rating-submit-btn {
+  background-color: var(--spotify-color);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--button-border-radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  align-self: flex-start;
+}
+
+.rating-submit-btn:hover {
+  background-color: var(--spotify-color-mid);
+}
+
+.main-btn {
+  background: none;
+  color: var(--text);
+  background-color: var(--spotify-color);
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 300;
+  border: none;
+  border-radius: var(--button-border-radius);
+  padding: 14px 28px;
+  margin: 10px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.main-btn:hover {
+  background-color: var(--spotify-color-mid);
+}
+
+.main-btn:active {
+  background-color: var(--spotify-color-pop);
+  transition: all 0s;
+}
+
+.logout-container {
+  position: absolute;
+  top: 0px;
+  right: 20px;
+}
+
+.secondary-btn {
+  background: none;
+  border: 1px solid #aaaaaa00;
+  color: var(--text-muted);
+  padding: 10px 20px;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: 'Inter', sans-serif;
+}
+
+.secondary-btn:hover {
+  border: 1px solid var(--text);
+  color: var(--text);
+}
+
+.secondary-btn:active {
+  border: 1px solid var(--text);
+  background-color: var(--text);
+  color: #000000;
+  transition: all 0s;
+}
+
+/* dropdown */
+.time_range {
+  font-family: 'Inter', sans-serif;
+}
+
+/* stuff for scatterplot graph */
+.axis-label {
+  font-size: 0.75rem;
+  fill: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: var(--text-muted);
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  fill: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+}
+
+.dot {
+  fill: var(--spotify-color-pop);
+  stroke: var(--bg-dark);
+  opacity: 0.6;
+}
+
+.dot:hover {
+  opacity: 1;
+  stroke: var(--text);
+  font-family: 'Inter', sans-serif;
+}
+
+.tooltip {
+  position: absolute;
+  text-align: center;
+  width: auto;
+  padding: 8px;
+  background: var(--bg-light);
+  border: 1px solid var(--text-muted);
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+}
+
+.grid line {
+  stroke: lightgray;
+  stroke-opacity: 0.15;
+  shape-rendering: crispEdges;
+  stroke-width: 1px;
+}
+
+.grid path {
+  display: none
+}
+
+/* New Styles for Dropdowns, Rating Boxes, and Comments */
+
+select {
+  background-color: var(--bg-light);
+  color: var(--text);
+  border: 1px solid var(--text-muted);
+  border-radius: var(--button-border-radius);
+  padding: 10px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+select:focus {
+  border-color: var(--spotify-color);
+}
+
+.rec-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.rec-box {
+  flex: 1 1 320px;
+  min-width: 280px;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background-color: var(--bg-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--bg-dark);
+}
+
+.rec-iframe {
+  width: 100%;
+  height: 152px;
+  /* Standard Spotify embed height */
+  border: 0;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.rating-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rating-form label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.rating-form input[type="number"],
+.rating-form input[type="text"] {
+  background-color: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--text-muted);
+  border-radius: var(--button-border-radius);
+  padding: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.rating-form input[type="number"]:focus,
+.rating-form input[type="text"]:focus {
+  border-color: var(--spotify-color);
+}
+
+.rating-submit-btn {
+  background-color: var(--spotify-color);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--button-border-radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  align-self: flex-start;
+}
+
+.rating-submit-btn:hover {
+  background-color: var(--spotify-color-mid);
+}
+
+.rating-submit-btn:active {
+  background-color: var(--spotify-color-pop);
+}
+
+.rating-confirm {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  min-height: 1.2em;
+}
+
+/* Scrollable tracks container */
+.tracks-scrollable-container {
+  max-height: 1000px;
+  overflow-y: auto;
+  padding: 1rem;
+  background-color: var(--bg-light);
+  border-radius: 12px;
+  border: 1px solid var(--bg-dark);
+  margin-top: 1rem;
+}
+
+/* Custom scrollbar styling */
+.tracks-scrollable-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tracks-scrollable-container::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+  border-radius: 4px;
+}
+
+.tracks-scrollable-container::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+
+.tracks-scrollable-container::-webkit-scrollbar-thumb:hover {
+  background: var(--spotify-color);
 }

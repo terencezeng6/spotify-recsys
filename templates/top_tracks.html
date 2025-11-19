@@ -1,206 +1,216 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Top Tracks</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-  </head>
-  <body class="body-flexible">
-    <div class="back-container">
-      <form action="/" method="get">
-        <button class="secondary-btn" type="submit">&lt;&lt;</button>
-      </form>
-    </div>
 
-    <!-- dropdown to select time range -->
-    <div style="padding-top: 50px;">
-      <label for="time_range">Time range: &nbsp;</label>
-      <select id="time_range" name="time_range">
-        <option value="" {% if not selected_range %}selected{% endif %}>Select Duration</option>
-        <option value="short_term" {% if selected_range == 'short_term' %}selected{% endif %}>4 weeks</option>
-        <option value="medium_term" {% if selected_range == 'medium_term' %}selected{% endif %}>6 months</option>
-        <option value="long_term" {% if selected_range == 'long_term' %}selected{% endif %}>12 months</option>
-      </select>
-    </div>
+<head>
+  <title>Top Tracks</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
 
-    <!-- dropdown to select mood -->
-    <div>
-      <label for="mood">Mood: &nbsp;</label>
-      <select id="mood" name="mood">
-        <option value="" {% if not selected_mood %}selected{% endif %}>Select Mood</option>
-        <option value="angry" {% if selected_mood == 'angry' %}selected{% endif %}>Angry</option>
-        <option value="stimulated" {% if selected_mood == 'stimulated' %}selected{% endif %}>Stimulated</option>
-        <option value="excited" {% if selected_mood == 'excited' %}selected{% endif %}>Excited</option>
-        <option value="distressed" {% if selected_mood == 'distressed' %}selected{% endif %}>Distressed</option>
-        <option value="neutral" {% if selected_mood == 'neutral' %}selected{% endif %}>Neutral</option>
-        <option value="happy" {% if selected_mood == 'happy' %}selected{% endif %}>Happy</option>
-        <option value="sad" {% if selected_mood == 'sad' %}selected{% endif %}>Sad</option>
-        <option value="tired" {% if selected_mood == 'tired' %}selected{% endif %}>Tired</option>
-        <option value="relaxed" {% if selected_mood == 'relaxed' %}selected{% endif %}>Relaxed</option>
-      </select>
-    </div>
+<body class="body-flexible">
+  <div class="back-container">
+    <form action="/" method="get">
+      <button class="secondary-btn" type="submit">&lt;&lt;</button>
+    </form>
+  </div>
 
-    <!-- display recommendations (if they exist) -->
+  <!-- dropdown to select time range -->
+  <div style="padding-top: 50px;">
+    <label for="time_range">Time range: &nbsp;</label>
+    <select id="time_range" name="time_range" style="border: 0px">
+      <option value="" {% if not selected_range %}selected{% endif %}>Select Duration</option>
+      <option value="short_term" {% if selected_range=='short_term' %}selected{% endif %}>4 weeks</option>
+      <option value="medium_term" {% if selected_range=='medium_term' %}selected{% endif %}>6 months</option>
+      <option value="long_term" {% if selected_range=='long_term' %}selected{% endif %}>12 months</option>
+    </select>
+  </div>
 
-    {% if vanilla_rec or biased_rec %}
-    <section id="recommendations">
-      <h2>Recommendations</h2>
+  <!-- dropdown to select mood -->
+  <div>
+    <label for="mood">Mood: &nbsp;</label>
+    <select id="mood" name="mood" style="border: 0px">
+      <option value="" {% if not selected_mood %}selected{% endif %}>Select Mood</option>
+      <option value="angry" {% if selected_mood=='angry' %}selected{% endif %}>Angry</option>
+      <option value="stimulated" {% if selected_mood=='stimulated' %}selected{% endif %}>Stimulated</option>
+      <option value="excited" {% if selected_mood=='excited' %}selected{% endif %}>Excited</option>
+      <option value="distressed" {% if selected_mood=='distressed' %}selected{% endif %}>Distressed</option>
+      <option value="neutral" {% if selected_mood=='neutral' %}selected{% endif %}>Neutral</option>
+      <option value="happy" {% if selected_mood=='happy' %}selected{% endif %}>Happy</option>
+      <option value="sad" {% if selected_mood=='sad' %}selected{% endif %}>Sad</option>
+      <option value="tired" {% if selected_mood=='tired' %}selected{% endif %}>Tired</option>
+      <option value="relaxed" {% if selected_mood=='relaxed' %}selected{% endif %}>Relaxed</option>
+    </select>
+  </div>
 
-      <style>
-        .rec-row { display:flex; gap:1rem; flex-wrap:wrap; }
-        .rec-box { flex:1 1 320px; min-width:280px; padding:0.5rem; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
-        .rec-iframe { width:100%; height:220px; border:0; border-radius:8px; }
-        .rating-form { margin-top:0.5rem; }
-        .rating-confirm { margin-top:0.5rem; color:green; }
-      </style>
+  <!-- display recommendations (if they exist) -->
+  {% if vanilla_rec or biased_rec %}
+  <section id="recommendations">
+    <h2>Recommendations</h2>
 
-      <div class="rec-row">
-        {% if vanilla_rec %}
-          <div class="rec-box" id="rec-vanilla">
-            <h3>Vanilla</h3>
-            <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ vanilla_rec }}?utm_source=generator" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+    <div class="rec-row">
+      {% if vanilla_rec %}
+      <div class="rec-box" id="rec-vanilla">
+        <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ vanilla_rec }}?utm_source=generator"
+          loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
 
-            <div class="rating-form">
-              <label for="vanilla-rating">Rating (1-5)</label>
-              <input id="vanilla-rating" type="number" min="1" max="5" value="5">
-              <label for="vanilla-comment">Comment (optional)</label>
-              <input id="vanilla-comment" type="text" placeholder="Thoughts...">
-              <button type="button" onclick="submitRating('{{ vanilla_rec }}','vanilla')">Submit</button>
-              <div id="vanilla-confirm" class="rating-confirm" aria-live="polite"></div>
-            </div>
+        <div class="rating-form">
+          <div>
+            <input id="vanilla-rating" type="number" min="1" max="5" placeholder="Rating (1-5)"
+              style="width: 100px; border: 0px">
           </div>
-        {% endif %}
-
-        {% if biased_rec %}
-          <div class="rec-box" id="rec-biased">
-            <h3>Biased</h3>
-            <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ biased_rec }}?utm_source=generator" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
-
-            <div class="rating-form">
-              <label for="biased-rating">Rating (1-5)</label>
-              <input id="biased-rating" type="number" min="1" max="5" value="5">
-              <label for="biased-comment">Comment (optional)</label>
-              <input id="biased-comment" type="text" placeholder="Thoughts...">
-              <button type="button" onclick="submitRating('{{ biased_rec }}','biased')">Submit</button>
-              <div id="biased-confirm" class="rating-confirm" aria-live="polite"></div>
-            </div>
+          <div>
+            <input id="vanilla-comment" type="text" placeholder="Comment (optional)"
+              style="width: 100%; box-sizing: border-box; border: 0px">
           </div>
-        {% endif %}
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button type="button" class="rating-submit-btn" style="font-family: 'Inter', sans-serif;"
+              onclick="submitRating('{{ vanilla_rec }}','vanilla')">Submit</button>
+            <div id="vanilla-confirm" class="rating-confirm" aria-live="polite"></div>
+          </div>
+        </div>
       </div>
+      {% endif %}
 
-      <script>
-        async function submitRating(recId, recType){
-          const ratingId = recType === 'vanilla' ? 'vanilla-rating' : 'biased-rating';
-          const commentId = recType === 'vanilla' ? 'vanilla-comment' : 'biased-comment';
-          const confirmId = recType === 'vanilla' ? 'vanilla-confirm' : 'biased-confirm';
+      {% if biased_rec %}
+      <div class="rec-box" id="rec-biased">
+        <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ biased_rec }}?utm_source=generator"
+          loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
 
-          const rating = parseInt(document.getElementById(ratingId).value) || null;
-          const comment = document.getElementById(commentId).value || '';
-          if(!rating || rating < 1 || rating > 5){
-            document.getElementById(confirmId).textContent = 'Enter rating 1-5';
-            return;
-          }
-
-          const payload = { rec_id: recId, rec_type: recType, rating: rating, comment: comment };
-          try{
-            const res = await fetch('/rate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-            const data = await res.json();
-            if(res.ok){
-              document.getElementById(confirmId).textContent = 'Thanks — rating saved.';
-            } else {
-              document.getElementById(confirmId).textContent = 'Error: ' + (data.error || 'could not save');
-            }
-          }catch(e){
-            document.getElementById(confirmId).textContent = 'Network error';
-          }
-        }
-      </script>
-
-    </section>
-
-    {% endif %}
-
-    <!-- display tracks -->
-    {% if tracks %}
-
-      <div id="scatterplot-container">
-        <h3>Energy vs. Valence of Your Top Tracks</h3>
-        <div id="scatterplot"></div>
+        <div class="rating-form">
+          <div>
+            <input id="biased-rating" type="number" min="1" max="5" placeholder="Rating (1-5)"
+              style="width: 100px; border: 0px">
+          </div>
+          <div>
+            <input id="biased-comment" type="text" placeholder="Comment (optional)"
+              style="width: 100%; box-sizing: border-box; border: 0px">
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button type="button" class="rating-submit-btn" style="font-family: 'Inter', sans-serif;"
+              onclick="submitRating('{{ biased_rec }}','biased')">Submit</button>
+            <div id="biased-confirm" class="rating-confirm" aria-live="polite"></div>
+          </div>
+        </div>
       </div>
-
-      <h2>Most played tracks in the past 
-        {% if selected_range == 'short_term' %}
-          4 weeks
-        {% elif selected_range == 'medium_term' %}
-          6 months
-        {% elif selected_range == 'long_term' %}
-          12 months
-        {% else %}
-          ?
-        {% endif %}
-      </h2>
-      <ol>
-        {% for track in tracks %}
-          <li>
-            <strong>{{track.name}} — {{track.artist}}</strong><br>
-            {% if track.available %}
-              Acousticness: {{ track.acousticness }}<br>
-              Danceability: {{ track.danceability }}<br>
-              Energy: {{ track.energy }}<br>
-              Instrumentalness: {{ track.instrumentalness }}<br>
-              Loudness: {{ track.loudness }} dB<br>
-              Valence: {{ track.valence }}<br>
-            {% else %}
-              <em>Audio features not available for this track.</em>
-            {% endif %}
-          </li>
-          <br>
-        {% endfor %}
-      </ol>
-    {% else %}
-        <p>Please select a time range to view your top tracks.</p>
-    {% endif %}
-
-    <!-- refresh page when dropdown item is selected -->
+      {% endif %}
+    </div>
 
     <script>
-      function updateQueryParam(key, value) {
-        const params = new URLSearchParams(window.location.search);
+      async function submitRating(recId, recType) {
+        const ratingId = recType === 'vanilla' ? 'vanilla-rating' : 'biased-rating';
+        const commentId = recType === 'vanilla' ? 'vanilla-comment' : 'biased-comment';
+        const confirmId = recType === 'vanilla' ? 'vanilla-confirm' : 'biased-confirm';
 
-        if (value && value !== "") {
-          params.set(key, value);
-        } else {
-          params.delete(key);
+        const rating = parseInt(document.getElementById(ratingId).value) || null;
+        const comment = document.getElementById(commentId).value || '';
+        if (!rating || rating < 1 || rating > 5) {
+          document.getElementById(confirmId).textContent = 'Enter a rating from 1 to 5';
+          return;
         }
 
-        const newQuery = params.toString();
-        const newUrl = window.location.pathname + (newQuery ? "?" + newQuery : "");
-        window.location.href = newUrl;
+        const payload = { rec_id: recId, rec_type: recType, rating: rating, comment: comment };
+        try {
+          const res = await fetch('/rate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const data = await res.json();
+          if (res.ok) {
+            document.getElementById(confirmId).textContent = 'Thanks! Feedback saved.';
+          } else {
+            document.getElementById(confirmId).textContent = 'Error: ' + (data.error || 'could not save');
+          }
+        } catch (e) {
+          document.getElementById(confirmId).textContent = 'Network error';
+        }
       }
-
-      document.getElementById('time_range').addEventListener('change', function() {
-        updateQueryParam('time_range', this.value);
-      });
-
-      document.getElementById('mood').addEventListener('change', function() {
-        updateQueryParam('mood', this.value);
-      });
     </script>
 
-    <!-- jsonify tracks data -->
-    <script id="track-data" type="application/json">
+  </section>
+  {% endif %}
+
+  <!-- display tracks -->
+  {% if tracks %}
+
+  <div id="scatterplot-container">
+    <h3>Energy vs. Valence of Your Top Tracks</h3>
+    <div id="scatterplot"></div>
+  </div>
+
+  <h2>Most played tracks in the past
+    {% if selected_range == 'short_term' %}
+    4 weeks
+    {% elif selected_range == 'medium_term' %}
+    6 months
+    {% elif selected_range == 'long_term' %}
+    12 months
+    {% else %}
+    ?
+    {% endif %}
+  </h2>
+
+  <div class="tracks-scrollable-container">
+    <ol>
+      {% for track in tracks %}
+      <li>
+        <strong>{{track.name}} — {{track.artist}}</strong><br>
+        {% if track.available %}
+        Acousticness: {{ track.acousticness }}<br>
+        Danceability: {{ track.danceability }}<br>
+        Energy: {{ track.energy }}<br>
+        Instrumentalness: {{ track.instrumentalness }}<br>
+        Loudness: {{ track.loudness }} dB<br>
+        Valence: {{ track.valence }}<br>
+        {% else %}
+        <em>Audio features not available for this track.</em>
+        {% endif %}
+      </li>
+      <br>
+      {% endfor %}
+    </ol>
+  </div>
+  {% else %}
+  <p>Please select a time range to view your top tracks.</p>
+  {% endif %}
+
+  <!-- refresh page when dropdown item is selected -->
+
+  <script>
+    function updateQueryParam(key, value) {
+      const params = new URLSearchParams(window.location.search);
+
+      if (value && value !== "") {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+
+      const newQuery = params.toString();
+      const newUrl = window.location.pathname + (newQuery ? "?" + newQuery : "");
+      window.location.href = newUrl;
+    }
+
+    document.getElementById('time_range').addEventListener('change', function () {
+      updateQueryParam('time_range', this.value);
+    });
+
+    document.getElementById('mood').addEventListener('change', function () {
+      updateQueryParam('mood', this.value);
+    });
+  </script>
+
+  <!-- jsonify tracks data -->
+  <script id="track-data" type="application/json">
       {{ tracks|tojson }}
     </script>
 
-    <!-- create scatterplot -->
-    <script src="{{ url_for('static', filename='scatterplot.js') }}"></script>
-    {% if tracks %}
-      <script>  
-        const rawData = document.getElementById("track-data").textContent;
-        const tracks = JSON.parse(rawData);
-        const filtered_tracks = tracks.filter(d => d.available);
-        renderScatterplot(filtered_tracks);
-      </script>
-    {% endif %}
-  </body>
+  <!-- create scatterplot -->
+  <script src="{{ url_for('static', filename='scatterplot.js') }}"></script>
+  {% if tracks %}
+  <script>
+    const rawData = document.getElementById("track-data").textContent;
+    const tracks = JSON.parse(rawData);
+    const filtered_tracks = tracks.filter(d => d.available);
+    renderScatterplot(filtered_tracks);
+  </script>
+  {% endif %}
+</body>
+
 </html>
