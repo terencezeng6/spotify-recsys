@@ -25,21 +25,20 @@
     </select>
   </div>
 
-  <!-- dropdown to select mood -->
-  <div>
-    <label for="mood">Mood: &nbsp;</label>
-    <select id="mood" name="mood">
-      <option value="" {% if not selected_mood %}selected{% endif %}>Select Mood</option>
-      <option value="angry" {% if selected_mood=='angry' %}selected{% endif %}>Angry</option>
-      <option value="stimulated" {% if selected_mood=='stimulated' %}selected{% endif %}>Stimulated</option>
-      <option value="excited" {% if selected_mood=='excited' %}selected{% endif %}>Excited</option>
-      <option value="distressed" {% if selected_mood=='distressed' %}selected{% endif %}>Distressed</option>
-      <option value="neutral" {% if selected_mood=='neutral' %}selected{% endif %}>Neutral</option>
-      <option value="happy" {% if selected_mood=='happy' %}selected{% endif %}>Happy</option>
-      <option value="sad" {% if selected_mood=='sad' %}selected{% endif %}>Sad</option>
-      <option value="tired" {% if selected_mood=='tired' %}selected{% endif %}>Tired</option>
-      <option value="relaxed" {% if selected_mood=='relaxed' %}selected{% endif %}>Relaxed</option>
-    </select>
+  <!-- mood grid selector -->
+  <div style="margin-top: 20px;">
+    <label>Mood:</label>
+    <div class="mood-grid">
+      <button type="button" class="mood-btn {% if selected_mood=='angry' %}mood-btn-selected{% endif %}" data-mood="angry">Angry</button>
+      <button type="button" class="mood-btn {% if selected_mood=='stimulated' %}mood-btn-selected{% endif %}" data-mood="stimulated">Stimulated</button>
+      <button type="button" class="mood-btn {% if selected_mood=='excited' %}mood-btn-selected{% endif %}" data-mood="excited">Excited</button>
+      <button type="button" class="mood-btn {% if selected_mood=='distressed' %}mood-btn-selected{% endif %}" data-mood="distressed">Distressed</button>
+      <button type="button" class="mood-btn {% if selected_mood=='neutral' %}mood-btn-selected{% endif %}" data-mood="neutral">Neutral</button>
+      <button type="button" class="mood-btn {% if selected_mood=='happy' %}mood-btn-selected{% endif %}" data-mood="happy">Happy</button>
+      <button type="button" class="mood-btn {% if selected_mood=='sad' %}mood-btn-selected{% endif %}" data-mood="sad">Sad</button>
+      <button type="button" class="mood-btn {% if selected_mood=='tired' %}mood-btn-selected{% endif %}" data-mood="tired">Tired</button>
+      <button type="button" class="mood-btn {% if selected_mood=='relaxed' %}mood-btn-selected{% endif %}" data-mood="relaxed">Relaxed</button>
+    </div>
   </div>
 
   <!-- display recommendations (if they exist) -->
@@ -191,8 +190,11 @@
       updateQueryParam('time_range', this.value);
     });
 
-    document.getElementById('mood').addEventListener('change', function () {
-      updateQueryParam('mood', this.value);
+    // Handle mood button clicks
+    document.querySelectorAll('.mood-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        updateQueryParam('mood', this.dataset.mood);
+      });
     });
   </script>
 
