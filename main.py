@@ -181,10 +181,10 @@ def top_tracks():
     return redirect("/refresh-token")
   
   time_range = request.args.get("time_range")  # Get the time_range from the query parameter
-  if time_range not in ["short_term", "medium_term", "long_term"]:
-      return render_template("top_tracks.html", tracks=None)
-  
   mood = request.args.get("mood")
+  if time_range not in ["short_term", "medium_term", "long_term"]:
+      return render_template("top_tracks.html", tracks=None, selected_range=None, selected_mood=mood)
+  
   
   headers = {
     "Authorization": f"Bearer {session["access_token"]}"
