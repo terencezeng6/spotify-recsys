@@ -15,7 +15,7 @@
   </div>
 
   <!-- dropdown to select time range -->
-  <div style="padding-top: 50px;">
+  <div class="time_range">
     <label for="time_range">Time range: &nbsp;</label>
     <select id="time_range" name="time_range">
       <option value="" {% if not selected_range %}selected{% endif %}>Select Duration</option>
@@ -29,15 +29,24 @@
   <div style="margin-top: 20px;">
     <label>Mood:</label>
     <div class="mood-grid">
-      <button type="button" class="mood-btn {% if selected_mood=='angry' %}mood-btn-selected{% endif %}" data-mood="angry">Angry</button>
-      <button type="button" class="mood-btn {% if selected_mood=='stimulated' %}mood-btn-selected{% endif %}" data-mood="stimulated">Stimulated</button>
-      <button type="button" class="mood-btn {% if selected_mood=='excited' %}mood-btn-selected{% endif %}" data-mood="excited">Excited</button>
-      <button type="button" class="mood-btn {% if selected_mood=='distressed' %}mood-btn-selected{% endif %}" data-mood="distressed">Distressed</button>
-      <button type="button" class="mood-btn {% if selected_mood=='neutral' %}mood-btn-selected{% endif %}" data-mood="neutral">Neutral</button>
-      <button type="button" class="mood-btn {% if selected_mood=='happy' %}mood-btn-selected{% endif %}" data-mood="happy">Happy</button>
-      <button type="button" class="mood-btn {% if selected_mood=='sad' %}mood-btn-selected{% endif %}" data-mood="sad">Sad</button>
-      <button type="button" class="mood-btn {% if selected_mood=='tired' %}mood-btn-selected{% endif %}" data-mood="tired">Tired</button>
-      <button type="button" class="mood-btn {% if selected_mood=='relaxed' %}mood-btn-selected{% endif %}" data-mood="relaxed">Relaxed</button>
+      <button type="button" class="mood-btn {% if selected_mood=='angry' %}mood-btn-selected{% endif %}"
+        data-mood="angry">Angry</button>
+      <button type="button" class="mood-btn {% if selected_mood=='stimulated' %}mood-btn-selected{% endif %}"
+        data-mood="stimulated">Stimulated</button>
+      <button type="button" class="mood-btn {% if selected_mood=='excited' %}mood-btn-selected{% endif %}"
+        data-mood="excited">Excited</button>
+      <button type="button" class="mood-btn {% if selected_mood=='distressed' %}mood-btn-selected{% endif %}"
+        data-mood="distressed">Distressed</button>
+      <button type="button" class="mood-btn {% if selected_mood=='neutral' %}mood-btn-selected{% endif %}"
+        data-mood="neutral">Neutral</button>
+      <button type="button" class="mood-btn {% if selected_mood=='happy' %}mood-btn-selected{% endif %}"
+        data-mood="happy">Happy</button>
+      <button type="button" class="mood-btn {% if selected_mood=='sad' %}mood-btn-selected{% endif %}"
+        data-mood="sad">Sad</button>
+      <button type="button" class="mood-btn {% if selected_mood=='tired' %}mood-btn-selected{% endif %}"
+        data-mood="tired">Tired</button>
+      <button type="button" class="mood-btn {% if selected_mood=='relaxed' %}mood-btn-selected{% endif %}"
+        data-mood="relaxed">Relaxed</button>
     </div>
   </div>
 
@@ -54,12 +63,11 @@
 
         <div class="rating-form">
           <div>
-            <input id="vanilla-rating" type="number" min="1" max="5" placeholder="Rating (1-5)"
-              style="width: 100px; border: 0px">
+            <input id="vanilla-rating" type="number" min="1" max="5" placeholder="Rating (1-5)" style="width: 100px">
           </div>
           <div>
             <input id="vanilla-comment" type="text" placeholder="Comment (optional)"
-              style="width: 100%; box-sizing: border-box; border: 0px">
+              style="width: 100%; box-sizing: border-box">
           </div>
           <div style="display: flex; align-items: center; gap: 1rem;">
             <button type="button" class="rating-submit-btn" style="font-family: 'Inter', sans-serif;"
@@ -77,12 +85,11 @@
 
         <div class="rating-form">
           <div>
-            <input id="biased-rating" type="number" min="1" max="5" placeholder="Rating (1-5)"
-              style="width: 100px; border: 0px">
+            <input id="biased-rating" type="number" min="1" max="5" placeholder="Rating (1-5)" style="width: 100px">
           </div>
           <div>
             <input id="biased-comment" type="text" placeholder="Comment (optional)"
-              style="width: 100%; box-sizing: border-box; border: 0px">
+              style="width: 100%; box-sizing: border-box">
           </div>
           <div style="display: flex; align-items: center; gap: 1rem;">
             <button type="button" class="rating-submit-btn" style="font-family: 'Inter', sans-serif;"
@@ -191,8 +198,8 @@
     });
 
     // Handle mood button clicks
-    document.querySelectorAll('.mood-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
+    document.querySelectorAll('.mood-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
         updateQueryParam('mood', this.dataset.mood);
       });
     });
