@@ -17,7 +17,7 @@
   <!-- dropdown to select time range -->
   <div style="padding-top: 50px;">
     <label for="time_range">Time range: &nbsp;</label>
-    <select id="time_range" name="time_range" style="border: 0px">
+    <select id="time_range" name="time_range">
       <option value="" {% if not selected_range %}selected{% endif %}>Select Duration</option>
       <option value="short_term" {% if selected_range=='short_term' %}selected{% endif %}>4 weeks</option>
       <option value="medium_term" {% if selected_range=='medium_term' %}selected{% endif %}>6 months</option>
@@ -28,7 +28,7 @@
   <!-- dropdown to select mood -->
   <div>
     <label for="mood">Mood: &nbsp;</label>
-    <select id="mood" name="mood" style="border: 0px">
+    <select id="mood" name="mood">
       <option value="" {% if not selected_mood %}selected{% endif %}>Select Mood</option>
       <option value="angry" {% if selected_mood=='angry' %}selected{% endif %}>Angry</option>
       <option value="stimulated" {% if selected_mood=='stimulated' %}selected{% endif %}>Stimulated</option>

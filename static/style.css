@@ -4,6 +4,7 @@
   --bg-dark: hsl(0 0% 0%);
   --bg: hsl(0 0% 5%);
   --bg-light: hsl(0 0% 10%);
+  --bg-lighter: hsl(0 0% 20%);
   --text: hsl(0 0% 95%);
   --text-muted: hsl(0 0% 70%);
   --spotify-color: hsl(141 73% 22%);
@@ -236,18 +237,20 @@ h3 {
 select {
   background-color: var(--bg-light);
   color: var(--text);
-  border: 1px solid var(--text-muted);
+  /* border: 1px solid var(--text-muted); */
   border-radius: var(--button-border-radius);
-  padding: 10px 16px;
+  border-color: transparent;
+  padding: 10px 16px 10px 16px;
   font-family: 'Inter', sans-serif;
   font-size: 1rem;
   cursor: pointer;
   outline: none;
   transition: border-color 0.2s;
+  appearance: none;
 }
 
-select:focus {
-  border-color: var(--spotify-color);
+select:hover {
+  background-color: var(--bg-lighter);
 }
 
 .rec-row {
