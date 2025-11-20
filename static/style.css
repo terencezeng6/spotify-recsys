@@ -37,8 +37,8 @@ body {
 }
 
 h1 {
+  margin: 32px;
   font-size: 2.5rem;
-  margin-bottom: 40px;
   text-align: center;
   font-weight: 300;
 }
@@ -142,6 +142,12 @@ h3 {
   transition: all 0s;
 }
 
+.about-container {
+  position: absolute;
+  top: 0px;
+  left: 20px;
+}
+
 .logout-container {
   position: absolute;
   top: 0px;
@@ -157,6 +163,7 @@ h3 {
   cursor: pointer;
   transition: all 0.25s;
   font-family: 'Inter', sans-serif;
+  font-weight: 300;
 }
 
 .secondary-btn:hover {
@@ -367,8 +374,8 @@ select:hover {
 .mood-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 10px;
+  gap: 16px;
+  margin-top: 24px;
   max-width: 400px;
 }
 
@@ -409,20 +416,18 @@ select:hover {
 /* Time range slider styles */
 .time_range_slider_container {
   font-family: 'Inter', sans-serif;
-  padding-top: 50px;
-  max-width: 400px;
+  padding-top: 64px;
 }
 
 .time_range_slider_container label {
   display: block;
-  margin-bottom: 15px;
   font-size: 1rem;
   color: var(--text);
 }
 
 .slider-wrapper {
   position: relative;
-  padding: 10px 0;
+  padding: 24px 8px;
 }
 
 /* Range input styling */

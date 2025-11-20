@@ -29,7 +29,7 @@
   </div>
 
   <!-- mood grid selector -->
-  <div style="margin-top: 20px;">
+  <div>
     <label>Mood:</label>
     <div class="mood-grid">
       <button type="button" class="mood-btn {% if selected_mood=='angry' %}mood-btn-selected{% endif %}"
@@ -54,7 +54,7 @@
   </div>
 
   <!-- submit button for filters -->
-  <div style="margin-top: 20px;">
+  <div>
     <button type="button" class="main-btn" id="apply-filters" style="max-width: 200px;">Apply Filters</button>
   </div>
 
@@ -186,7 +186,7 @@ picture-in-picture"></iframe>
     </ol>
   </div>
   {% else %}
-  <p>Please select a time range to view your top tracks.</p>
+  <p>Please select a time range and mood to view your recommendations.</p>
   {% endif %}
 
   <!-- JavaScript for slider and mood buttons -->
