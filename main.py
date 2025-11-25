@@ -563,13 +563,21 @@ def top_tracks():
   if vanilla_rec == biased_rec:
     vanilla_rec = recs[vanilla_recommendations[1]]["spotify_id"]
 
+  # Create list with both recommendations
+  recommendations = [
+    {"spotify_id": vanilla_rec, "rec_type": "vanilla"},
+    {"spotify_id": biased_rec, "rec_type": "biased"}
+  ]
+
+  # Randomly shuffle the order
+  random.shuffle(recommendations)
+
   return render_template(
     "top_tracks.html", 
     tracks=tracks, 
     selected_range=time_range, 
     selected_mood=mood,
-    vanilla_rec=vanilla_rec,
-    biased_rec=biased_rec
+    recommendations=recommendations
   )
 
   

@@ -59,56 +59,33 @@
   </div>
 
   <!-- display recommendations (if they exist) -->
-  {% if vanilla_rec or biased_rec %}
+  {% if recommendations %}
   <section id="recommendations">
     <h2>Recommendations</h2>
 
     <div class="rec-row">
-      {% if vanilla_rec %}
-      <div class="rec-box" id="rec-vanilla">
-        <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ vanilla_rec }}?utm_source=generator"
+      {% for rec in recommendations %}
+      <div class="rec-box" id="rec-{{ rec.rec_type }}">
+        <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ rec.spotify_id }}?utm_source=generator"
           loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen;
 picture-in-picture"></iframe>
 
         <div class="rating-form">
           <div>
-            <input id="vanilla-rating" type="number" min="1" max="5" placeholder="Rating (1-5)" style="width: 100px">
+            <input id="{{ rec.rec_type }}-rating" type="number" min="1" max="5" placeholder="Rating (1-5)" style="width: 100px">
           </div>
           <div>
-            <input id="vanilla-comment" type="text" placeholder="Comment (optional)"
+            <input id="{{ rec.rec_type }}-comment" type="text" placeholder="Comment (optional)"
               style="width: 100%; box-sizing: border-box">
           </div>
           <div style="display: flex; align-items: center; gap: 1rem;">
             <button type="button" class="rating-submit-btn" style="font-family: 'Inter', sans-serif;"
-              onclick="submitRating('{{ vanilla_rec }}','vanilla')">Submit</button>
-            <div id="vanilla-confirm" class="rating-confirm" aria-live="polite"></div>
+              onclick="submitRating('{{ rec.spotify_id }}','{{ rec.rec_type }}')">Submit</button>
+            <div id="{{ rec.rec_type }}-confirm" class="rating-confirm" aria-live="polite"></div>
           </div>
         </div>
       </div>
-      {% endif %}
-
-      {% if biased_rec %}
-      <div class="rec-box" id="rec-biased">
-        <iframe class="rec-iframe" src="https://open.spotify.com/embed/track/{{ biased_rec }}?utm_source=generator"
-          loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen;
-picture-in-picture"></iframe>
-
-        <div class="rating-form">
-          <div>
-            <input id="biased-rating" type="number" min="1" max="5" placeholder="Rating (1-5)" style="width: 100px">
-          </div>
-          <div>
-            <input id="biased-comment" type="text" placeholder="Comment (optional)"
-              style="width: 100%; box-sizing: border-box">
-          </div>
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <button type="button" class="rating-submit-btn" style="font-family: 'Inter', sans-serif;"
-              onclick="submitRating('{{ biased_rec }}','biased')">Submit</button>
-            <div id="biased-confirm" class="rating-confirm" aria-live="polite"></div>
-          </div>
-        </div>
-      </div>
-      {% endif %}
+      {% endfor %}
     </div>
 
     <script>
