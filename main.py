@@ -35,7 +35,7 @@ LASTFM_BASE_URL = "http://ws.audioscrobbler.com/2.0/"
 
 @app.route("/rate", methods=["POST"])
 def rate():
-  # Accept JSON payload { rec_id, rec_type, rating, comment }
+  # Accept JSON payload { rec_id, rec_type, rating, comment, song_name, song_artist, valence, energy }
   payload = {}
   if request.is_json:
     payload = request.get_json()
@@ -46,6 +46,16 @@ def rate():
   rec_type = payload.get('rec_type', '')
   rating = payload.get('rating')
   comment = payload.get('comment', '')
+  
+  # Get song metadata
+  song_name = payload.get('song_name', '')
+  song_artist = payload.get('song_artist', '')
+  valence = payload.get('valence', '')
+  energy = payload.get('energy', '')
+  
+  # Get context information
+  mood = payload.get('mood', '')
+  time_range = payload.get('time_range', '')
 
   try:
     rating_val = int(rating)
@@ -55,8 +65,11 @@ def rate():
   username = session.get('username', 'anonymous')
   ts = datetime.utcnow().isoformat() + 'Z'
   safe_comment = str(comment).replace('\n', ' ').replace('\r', ' ').strip()
+  safe_name = str(song_name).replace('\n', ' ').replace('\r', ' ').replace('\t', ' ').strip()
+  safe_artist = str(song_artist).replace('\n', ' ').replace('\r', ' ').replace('\t', ' ').strip()
 
-  line = f"{ts}\t{username}\t{rec_type}\t{rec_id}\t{rating_val}\t{safe_comment}\n"
+  # Updated log format: timestamp, username, rec_type, rec_id, rating, comment, song_name, song_artist, valence, energy, mood, time_range
+  line = f"{ts}\t{username}\t{rec_type}\t{rec_id}\t{rating_val}\t{safe_comment}\t{safe_name}\t{safe_artist}\t{valence}\t{energy}\t{mood}\t{time_range}\n"
   try:
     path = os.path.join(app.root_path, 'ratings.txt')
     with open(path, 'a', encoding='utf-8') as f:
@@ -560,14 +573,38 @@ def top_tracks():
   vanilla_rec = recs[vanilla_recommendations[0]]["spotify_id"]
   biased_rec = recs[biased_recommendations[0]]["spotify_id"]
 
+  # Track which index to use for metadata
+  vanilla_idx = vanilla_recommendations[0]
+  biased_idx = biased_recommendations[0]
+
   if vanilla_rec == biased_rec:
     vanilla_rec = recs[vanilla_recommendations[1]]["spotify_id"]
+    vanilla_idx = vanilla_recommendations[1]
 
-  # Create list with both recommendations
+  # Create list with both recommendations including metadata
   recommendations = [
-    {"spotify_id": vanilla_rec, "rec_type": "vanilla"},
-    {"spotify_id": biased_rec, "rec_type": "biased"}
+    {
+      "spotify_id": vanilla_rec, 
+      "rec_type": "vanilla",
+      "name": recs[vanilla_idx]["name"],
+      "artist": recs[vanilla_idx]["artist"],
+      "valence": recs[vanilla_idx]["valence"],
+      "energy": recs[vanilla_idx]["energy"]
+    },
+    {
+      "spotify_id": biased_rec, 
+      "rec_type": "biased",
+      "name": recs[biased_idx]["name"],
+      "artist": recs[biased_idx]["artist"],
+      "valence": recs[biased_idx]["valence"],
+      "energy": recs[biased_idx]["energy"]
+    }
   ]
+
+  # Add context (mood and time_range) to each recommendation
+  for rec in recommendations:
+    rec['mood'] = mood
+    rec['time_range'] = time_range
 
   # Randomly shuffle the order
   random.shuffle(recommendations)

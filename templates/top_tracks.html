@@ -80,7 +80,7 @@ picture-in-picture"></iframe>
           </div>
           <div style="display: flex; align-items: center; gap: 1rem;">
             <button type="button" class="rating-submit-btn" style="font-family: 'Inter', sans-serif;"
-              onclick="submitRating('{{ rec.spotify_id }}','{{ rec.rec_type }}')">Submit</button>
+              onclick="submitRating('{{ rec.spotify_id }}','{{ rec.rec_type }}','{{ rec.name }}','{{ rec.artist }}','{{ rec.valence }}','{{ rec.energy }}','{{ rec.mood }}','{{ rec.time_range }}')">Submit</button>
             <div id="{{ rec.rec_type }}-confirm" class="rating-confirm" aria-live="polite"></div>
           </div>
         </div>
@@ -89,7 +89,7 @@ picture-in-picture"></iframe>
     </div>
 
     <script>
-      async function submitRating(recId, recType) {
+      async function submitRating(recId, recType, songName, songArtist, valence, energy, mood, timeRange) {
         const ratingId = recType === 'vanilla' ? 'vanilla-rating' : 'biased-rating';
         const commentId = recType === 'vanilla' ? 'vanilla-comment' : 'biased-comment';
         const confirmId = recType === 'vanilla' ? 'vanilla-confirm' : 'biased-confirm';
@@ -101,7 +101,18 @@ picture-in-picture"></iframe>
           return;
         }
 
-        const payload = { rec_id: recId, rec_type: recType, rating: rating, comment: comment };
+        const payload = { 
+          rec_id: recId, 
+          rec_type: recType, 
+          rating: rating, 
+          comment: comment,
+          song_name: songName,
+          song_artist: songArtist,
+          valence: valence,
+          energy: energy,
+          mood: mood,
+          time_range: timeRange
+        };
         try {
           const res = await fetch('/rate', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body:
